@@ -106,7 +106,7 @@ void register_signalhandlers() {
 }
 
 /* checks, if a button on the pad is pressed and sends an event according the button state. */
-inline void processPadBtn(uint16_t buttons, uint16_t evtype, uint16_t mask, uint16_t key,
+static inline void processPadBtn(uint16_t buttons, uint16_t evtype, uint16_t mask, uint16_t key,
 		UINP_GPAD_DEV* uinp_gpad) {
 	if ((buttons & mask) == mask) {
 		uinput_gpad_write(uinp_gpad, key, 1, evtype);
@@ -150,6 +150,8 @@ int main(int argc, char *argv[]) {
 	int16_t strobepin_v2;
 	int16_t data1pin_v2;
 	int16_t data2pin_v2;
+
+	bcm2835_set_debug(1);
 
 	if (!bcm2835_init())
 		return 1;
