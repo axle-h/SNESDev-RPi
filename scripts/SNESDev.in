@@ -20,7 +20,7 @@
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="SNESDev GPIO Adapter daemon"
 NAME=SNESDev
-DAEMON=/usr/local/bin/$NAME
+DAEMON=@CMAKE_INSTALL_PREFIX@/sbin/$NAME
 DAEMON_ARGS=""
 PIDFILE=/var/run/$NAME.pid
 SCRIPTNAME=/etc/init.d/$NAME
