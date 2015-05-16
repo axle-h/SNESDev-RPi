@@ -3,7 +3,7 @@ project(SNESDev)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
-configure_file (${PROJECT_SOURCE_DIR}/scripts/SNESDev.in ${PROJECT_BINARY_DIR}/scripts/SNESDevs)
+configure_file (${PROJECT_SOURCE_DIR}/scripts/SNESDev.in ${PROJECT_BINARY_DIR}/scripts/SNESDev)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic -std=gnu11")
 
@@ -22,11 +22,30 @@ target_link_libraries(SNESDev
 	${CONFUSE_LIBRARIES}
 	${BCM2835_LIBRARIES})
 
-install(TARGETS SNESDev DESTINATION sbin)
-install(FILES "${PROJECT_BINARY_DIR}/scripts/SNESDev" DESTINATION /etc/init.d)
-install(FILES "${PROJECT_SOURCE_DIR}/scripts/snesdev.cfg" DESTINATION /etc)
-install(CODE "execute_process(COMMAND chmod +x /etc/init.d/SNESDev)")
-install(CODE "execute_process(COMMAND systemctl daemon-reload)")
-install(CODE "execute_process(COMMAND service SNESDev start)")
-install(CODE "execute_process(COMMAND update-rc.d SNESDev defaults)")
+# install target
+install(TARGETS SNESDev
+    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ WORLD_READ
+    DESTINATION sbin)
+install(FILES "${PROJECT_SOURCE_DIR}/scripts/snesdev.cfg"
+    PERMISSIONS OWNER_WRITE OWNER_READ GROUP_WRITE GROUP_READ WORLD_READ
+    DESTINATION /etc)
+install(FILES "${PROJECT_BINARY_DIR}/scripts/SNESDev"
+    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_WRITE GROUP_READ WORLD_READ
+    DESTINATION /etc/init.d)
+
+# uninstall target
+configure_file(
+    "${PROJECT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
+    "${PROJECT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+add_custom_target(uninstall COMMAND ${CMAKE_COMMAND} -P ${PROJECT_BINARY_DIR}/cmake_uninstall.cmake)
+
+# install service target
+SET(DAEMON_SCRIPT SNESDev)
+configure_file(
+    "${PROJECT_SOURCE_DIR}/cmake/cmake_installservice.cmake.in"
+    "${PROJECT_BINARY_DIR}/cmake_installservice.cmake"
+    IMMEDIATE @ONLY)
+add_custom_target(installservice COMMAND ${CMAKE_COMMAND} -P ${PROJECT_BINARY_DIR}/cmake_installservice.cmake)
+
 
