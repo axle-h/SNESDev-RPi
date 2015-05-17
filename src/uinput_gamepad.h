@@ -25,8 +25,7 @@
  * Raspberry Pi is a trademark of the Raspberry Pi Foundation.
  */
 
-#ifndef UINPUT_GAMEPAD_H_
-#define UINPUT_GAMEPAD_H_
+#pragma once
 
  #include <stdint.h>
 
@@ -44,4 +43,3 @@ int16_t uinput_gpad_open   (UINP_GPAD_DEV* const gpad, UINPUT_GPAD_TYPE_E type);
 int16_t uinput_gpad_close  (UINP_GPAD_DEV* const gpad);
 int16_t uinput_gpad_write  (UINP_GPAD_DEV* const gpad, uint16_t keycode, int16_t keyvalue, uint16_t evtype);
 
-#endif /* UINPUT_GAMEPAD_H_ */

@@ -25,8 +25,7 @@
  * Raspberry Pi is a trademark of the Raspberry Pi Foundation.
  */
 
-#ifndef GPIO_H_
-#define GPIO_H_
+#pragma once
 
 typedef enum {
 	GPIO_SETDIR = 0,
@@ -47,4 +46,3 @@ int16_t          gpio_open       (int16_t port, int16_t pin, GPIO_DIR direction)
 uint8_t          gpio_read_pin   (int16_t port, int16_t pin);
 int16_t          gpio_write_pin  (int16_t port, int16_t pin, GPIO_VALUE val);
 
-#endif /* GPIO_H_ */

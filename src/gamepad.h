@@ -25,8 +25,7 @@
  * Raspberry Pi is a trademark of the Raspberry Pi Foundation.
  */
 
-#ifndef GAMEPAD_H_
-#define GAMEPAD_H_
+#pragma once
 
 /* bit masks for checking the button states for SNES controllers */
 #define GPAD_SNES_B       0x01
@@ -53,7 +52,8 @@
 #define GPAD_NES_A       0x100
 
 typedef enum {
-	GPAD_TYPE_NES = 0, GPAD_TYPE_SNES = 1
+	GPAD_TYPE_NES = 0,
+	GPAD_TYPE_SNES = 1
 } GPAD_TYPE;
 
 /* holds the GPIO pins for the clock, strobe and data signals */
@@ -71,4 +71,3 @@ int16_t gpad_close();
 int16_t gpad_ioctrl();
 int16_t gpad_read(GPAD_ST* const gpad);
 
-#endif /* GAMEPAD_H_ */

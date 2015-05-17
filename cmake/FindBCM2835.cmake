@@ -1,18 +1,14 @@
 FIND_PATH(BCM2835_INCLUDE_DIR bcm2835.h
-PATHS
-"$ENV{BCM2835}/include"
-/usr/local/include
-/usr/include
-C:/MinGW/msys/1.0/local/include
-C:/MinGW/msys/1.0/include
-)
+    PATHS
+    "$ENV{BCM2835}/include"
+    /usr/local/include
+    /usr/include)
 
 FIND_LIBRARY(BCM2835_LIBRARIES bcm2835
-PATHS
-"$ENV{BCM2835}/lib"
-/usr/local/lib
-/usr/lib
-)
+    PATHS
+    "$ENV{BCM2835}/lib"
+    /usr/local/lib
+    /usr/lib)
 
 SET(BCM2835_FOUND 0)
 IF(BCM2835_INCLUDE_DIR)
@@ -23,6 +19,5 @@ IF(BCM2835_INCLUDE_DIR)
 ENDIF(BCM2835_INCLUDE_DIR)
 
 MARK_AS_ADVANCED(
-BCM2835_INCLUDE_DIR
-BCM2835_LIBRARIES
-)
+    BCM2835_INCLUDE_DIR
+    BCM2835_LIBRARIES)

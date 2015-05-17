@@ -26,25 +26,23 @@
  */
 
 #include <linux/uinput.h>
-#include <sys/time.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <bcm2835.h>
 #include <signal.h>
-#include <time.h>
-#include <stddef.h>
-#include <stdint.h>
 
 #include "confuse.h"
 
-#include "signal.h"
 #include "btn.h"
 #include "gamepad.h"
 #include "uinput_kbd.h"
 #include "uinput_gamepad.h"
 #include "cpuinfo.h"
+
+#include "config.h"
+#include "types.h"
 
 #define CFGFILENAME "/etc/snesdev.cfg"
 #define BUTTONPIN     RPI_GPIO_P1_11
@@ -54,6 +52,8 @@
 #define GPADSNUM 2 /* number of game pads to poll */
 #define FRAMEWAIT 20
 #define FRAMEWAITLONG 100
+
+#define CONFIG_FILE "/etc/gpio/snesdev.cfg"
 
 int16_t doRun, pollButton, pollPads;
 UINP_KBD_DEV uinp_kbd;
@@ -138,6 +138,28 @@ int readConfigurationfile() {
 }
 
 int main(int argc, char *argv[]) {
+
+    SNESDevConfig config;
+    if(!TryGetSNESDevConfig(CONFIG_FILE, &config)) {
+        return EXIT_FAILURE;
+    }
+
+    printf("DebugEnabled: %s, PidFile: %s\n",
+           config.DebugEnabled ? true_str : false_str, config.PidFile);
+    printf("ClockGpio: %u, LatchGpio: %u, GamepadPollFrequency: %u\n",
+           config.ClockGpio, config.LatchGpio, config.GamepadPollFrequency);
+
+    for(unsigned int i=0; i<config.NumberOfGamepads; i++) {
+        GamepadConfig gamepad;
+        gamepad = config.Gamepads[i];
+        printf("Gamepad %u, Enabled: %s, Type: %d, Gpio: %u\n", gamepad.Id, gamepad.Enabled ? true_str : false_str, gamepad.Type, gamepad.DataGpio);
+    }
+
+    printf("ButtonEnabled: %s, ButtonGpio: %u, ButtonPollFrequency: %u\n",
+           config.ButtonEnabled ? true_str : false_str, config.ButtonGpio, config.ButtonPollFrequency);
+
+    return EXIT_SUCCESS;
+
 
 	uint8_t ctr = 0;
 	GPAD_ST gpads[GPADSNUM];

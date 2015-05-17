@@ -25,8 +25,7 @@
  * Raspberry Pi is a trademark of the Raspberry Pi Foundation.
  */
 
-#ifndef BUTTON_H_
-#define BUTTON_H_
+#pragma once
 
 #include <stdint.h>
 
@@ -47,4 +46,3 @@ int16_t btn_open(BTN_DEV_ST* btn);
 void btn_read(BTN_DEV_ST* const btn);
 int16_t btn_ioctlr();
 
-#endif /* BUTTON_H_ */

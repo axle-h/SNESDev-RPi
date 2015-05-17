@@ -25,12 +25,14 @@
  * Raspberry Pi is a trademark of the Raspberry Pi Foundation.
  */
 
-#ifndef TYPES_H_
-#define TYPES_H_
+#pragma once
 
 #ifndef NULL
 #define NULL ((void *)0)
 #endif
+
+#define true_str "true"
+#define false_str "false"
 
 typedef signed char S8;
 typedef unsigned char U8;
@@ -52,4 +54,4 @@ typedef U32 GPIOWIDTH_T;
 #define TIMET_MIN (U32_MIN)
 #define TIMET_MAX (U32_MAX)
 
-#endif /* TYPES_H_ */
+

@@ -1,3 +1,0 @@
-execute_process(COMMAND systemctl daemon-reload)
-execute_process(COMMAND service @DAEMON_SCRIPT@ start)
-execute_process(COMMAND update-rc.d @DAEMON_SCRIPT@ defaults)
