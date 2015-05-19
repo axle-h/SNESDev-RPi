@@ -37,10 +37,11 @@
 #include "gamepad.h"
 #include "uinput_kbd.h"
 #include "uinput_gamepad.h"
-#include "cpuinfo.h"
 
 #include "config.h"
-#include "types.h"
+
+#define true_str "true"
+#define false_str "false"
 
 #define MAX_GAMEPADS 2 /* number of game pads to poll */
 
