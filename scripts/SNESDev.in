@@ -21,8 +21,8 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 DESC="(S)NES controller user-space driver for Raspberry Pi GPIO"
 NAME=SNESDev
 DAEMON=@CMAKE_INSTALL_PREFIX@/sbin/$NAME
-DAEMON_ARGS=""
 PIDFILE=/var/run/$NAME.pid
+DAEMON_ARGS="--daemon --pidfile=$PIDFILE"
 SCRIPTNAME=/etc/init.d/$NAME
 
 # Exit if the package is not installed
