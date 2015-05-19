@@ -33,8 +33,6 @@
 #include <bcm2835.h>
 #include <signal.h>
 
-#include "confuse.h"
-
 #include "btn.h"
 #include "gamepad.h"
 #include "uinput_kbd.h"
@@ -44,33 +42,13 @@
 #include "config.h"
 #include "types.h"
 
-#define CFGFILENAME "/etc/snesdev.cfg"
-#define BUTTONPIN     RPI_GPIO_P1_11
-#define BUTTONPIN_V2  RPI_V2_GPIO_P1_11
-
-/* time to wait after each cycle */
-#define GPADSNUM 2 /* number of game pads to poll */
-#define FRAMEWAIT 20
-#define FRAMEWAITLONG 100
+#define MAX_GAMEPADS 2 /* number of game pads to poll */
 
 #define CONFIG_FILE "/etc/gpio/snesdev.cfg"
 
 int16_t doRun, pollButton, pollPads;
 UINP_KBD_DEV uinp_kbd;
-UINP_GPAD_DEV uinp_gpads[GPADSNUM];
-
-/* structure for the configuration parameters */
-typedef struct {
-	cfg_bool_t button_enabled;
-	cfg_bool_t gamepad1_enabled;
-	char *gamepad1_type;
-	cfg_bool_t gamepad2_enabled;
-	char *gamepad2_type;
-	char *adapter_version;
-} configuration_st;
-
-cfg_t *cfg;
-configuration_st confres;
+UINP_GPAD_DEV uinp_gpads[MAX_GAMEPADS];
 
 /* Signal callback function */
 void sig_handler(int signo) {
@@ -82,12 +60,9 @@ void sig_handler(int signo) {
 		pollButton = 0;
 		pollPads = 0;
 		uinput_kbd_close(&uinp_kbd);
-		for (ctr = 0; ctr < GPADSNUM; ctr++) {
+		for (ctr = 0; ctr < MAX_GAMEPADS; ctr++) {
 			uinput_gpad_close(&uinp_gpads[ctr]);
 		}
-	    cfg_free(cfg);
-	    free(confres.gamepad1_type);
-	    free(confres.gamepad2_type);
 
 		doRun = 0;
 	}
@@ -106,8 +81,7 @@ void register_signalhandlers() {
 }
 
 /* checks, if a button on the pad is pressed and sends an event according the button state. */
-static inline void processPadBtn(uint16_t buttons, uint16_t evtype, uint16_t mask, uint16_t key,
-		UINP_GPAD_DEV* uinp_gpad) {
+static inline void processPadBtn(uint16_t buttons, uint16_t evtype, uint16_t mask, uint16_t key, UINP_GPAD_DEV* uinp_gpad) {
 	if ((buttons & mask) == mask) {
 		uinput_gpad_write(uinp_gpad, key, 1, evtype);
 	} else {
@@ -115,32 +89,10 @@ static inline void processPadBtn(uint16_t buttons, uint16_t evtype, uint16_t mas
 	}
 }
 
-int readConfigurationfile() {
-    cfg_opt_t opts[] = {
-        CFG_SIMPLE_INT("button_enabled", &confres.button_enabled),
-        CFG_SIMPLE_INT("gamepad1_enabled", &confres.gamepad1_enabled),
-        CFG_SIMPLE_STR("gamepad1_type", &confres.gamepad1_type),
-        CFG_SIMPLE_INT("gamepad2_enabled", &confres.gamepad2_enabled),
-        CFG_SIMPLE_STR("gamepad2_type", &confres.gamepad2_type),
-        CFG_SIMPLE_STR("adapter_version", &confres.adapter_version),
-        CFG_END()
-    };
-    cfg = cfg_init(opts, 0);
-    if ( access(CFGFILENAME, F_OK) == -1 ) {
-    	printf("[SNESDev-Rpi] Error: Cannot find /etc/snesdev.cfg\n");
-		return 1;
-    }
-    if (cfg_parse(cfg, CFGFILENAME) == CFG_PARSE_ERROR) {
-    	printf("[SNESDev-Rpi] Error: Cannot parse /etc/snesdev.cfg\n");
-		return 1;
-    }
-    return 0;
-}
-
 int main(int argc, char *argv[]) {
 
     SNESDevConfig config;
-    if(!TryGetSNESDevConfig(CONFIG_FILE, argc, argv, &config)) {
+    if(!TryGetSNESDevConfig(CONFIG_FILE, argc, argv, MAX_GAMEPADS, &config)) {
         return EXIT_FAILURE;
     }
 
@@ -149,7 +101,7 @@ int main(int argc, char *argv[]) {
     printf("ClockGpio: %u, LatchGpio: %u, GamepadPollFrequency: %u\n",
            config.ClockGpio, config.LatchGpio, config.GamepadPollFrequency);
 
-    for(unsigned int i=0; i<config.NumberOfGamepads; i++) {
+    for(unsigned int i=0; i < config.NumberOfGamepads; i++) {
         GamepadConfig *gamepad = &config.Gamepads[i];
         printf("Gamepad %u, Enabled: %s, Type: %d, Gpio: %u\n", gamepad->Id, gamepad->Enabled ? true_str : false_str, gamepad->Type, gamepad->DataGpio);
     }
@@ -157,229 +109,107 @@ int main(int argc, char *argv[]) {
     printf("ButtonEnabled: %s, ButtonGpio: %u, ButtonPollFrequency: %u\n",
            config.ButtonEnabled ? true_str : false_str, config.ButtonGpio, config.ButtonPollFrequency);
 
-    return EXIT_SUCCESS;
+	bcm2835_set_debug((uint8_t) config.DebugEnabled);
 
-
-	uint8_t ctr = 0;
-	GPAD_ST gpads[GPADSNUM];
-	BTN_DEV_ST button;
-	int16_t clockpin;
-	int16_t strobepin;
-	int16_t data1pin;
-	int16_t data2pin;
-	int16_t clockpin_v2;
-	int16_t strobepin_v2;
-	int16_t data1pin_v2;
-	int16_t data2pin_v2;
-
-	bcm2835_set_debug(1);
-
-	if (!bcm2835_init())
-		return 1;
-	
-	if (readConfigurationfile() != 0 ) {
+	if (!bcm2835_init()) {
 		return 1;
 	}
 
-	if (strcmp(confres.adapter_version,"1x")==0) {
-		clockpin = RPI_GPIO_P1_19;
-		strobepin = RPI_GPIO_P1_23;
-		data1pin = RPI_GPIO_P1_05;
-		data2pin = RPI_GPIO_P1_07;
-		clockpin_v2 = RPI_V2_GPIO_P1_19;
-		strobepin_v2 = RPI_V2_GPIO_P1_23;
-		data1pin_v2 = RPI_V2_GPIO_P1_05;
-		data2pin_v2 = RPI_V2_GPIO_P1_07;
-		printf("[SNESDev-Rpi] Using pin setup for RetroPie GPIO-Adapter Version 1.X\n");
+    GPAD_ST gpads[config.NumberOfGamepads];
+    BTN_DEV_ST button;
 
-	} else if (strcmp(confres.adapter_version,"2x")==0) {
-		clockpin = RPI_GPIO_P1_16;
-		strobepin = RPI_GPIO_P1_18;
-		data1pin = RPI_GPIO_P1_15;
-		data2pin = RPI_GPIO_P1_13;
-		clockpin_v2 = RPI_V2_GPIO_P1_16;
-		strobepin_v2 = RPI_V2_GPIO_P1_18;
-		data1pin_v2 = RPI_V2_GPIO_P1_15;
-		data2pin_v2 = RPI_V2_GPIO_P1_13;
-		printf("[SNESDev-Rpi] Using pin setup for RetroPie GPIO-Adapter Version 2.X\n");
+	if (config.NumberOfGamepads > 0) {
 
-	} else {
-		clockpin = RPI_GPIO_P1_16;
-		strobepin = RPI_GPIO_P1_18;
-		data1pin = RPI_GPIO_P1_15;
-		data2pin = RPI_GPIO_P1_13;
-		clockpin_v2 = RPI_V2_GPIO_P1_16;
-		strobepin_v2 = RPI_V2_GPIO_P1_18;
-		data1pin_v2 = RPI_V2_GPIO_P1_15;
-		data2pin_v2 = RPI_V2_GPIO_P1_13;
-		printf("[SNESDev-Rpi] Using pin setup for RetroPie GPIO-Adapter Version 2.X\n");
+        for(uint8_t i = 0; i < config.NumberOfGamepads; i++) {
+            GamepadConfig *gamepad = &config.Gamepads[i];
+
+            gpads[i].port = 1;
+            gpads[i].pin_clock = config.ClockGpio;
+            gpads[i].pin_strobe = config.LatchGpio;
+            gpads[i].pin_data = gamepad->DataGpio;
+            gpads[i].type = gamepad->Type;
+
+            if(gamepad->Enabled) {
+                printf("[SNESDev-Rpi] Enabling game pad %d with type '%s'.\n",
+                       gamepad->Id, gamepad->Type == GPAD_TYPE_NES ? "NES" : "SNES");
+                gpad_open(&gpads[i]);
+                uinput_gpad_open(&uinp_gpads[0]);
+            }
+        }
 	}
 
-
-	if (confres.gamepad1_enabled || confres.gamepad2_enabled) {
-
-		gpads[0].port = 1;
-		gpads[1].port = 1;
-		// check board revision and set pins to be used
-		// these are acutally also used by the gamecon driver
-		if (get_rpi_revision()==1)
-		{
-			gpads[0].pin_clock = clockpin;
-			gpads[0].pin_strobe = strobepin;
-			gpads[0].pin_data = data1pin;
-			gpads[1].pin_clock = clockpin;
-			gpads[1].pin_strobe = strobepin;
-			gpads[1].pin_data = data2pin;		
-		} else {
-			gpads[0].pin_clock = clockpin_v2;
-			gpads[0].pin_strobe = strobepin_v2;
-			gpads[0].pin_data = data1pin_v2;
-			gpads[1].pin_clock = clockpin_v2;
-			gpads[1].pin_strobe = strobepin_v2;
-			gpads[1].pin_data = data2pin_v2;		
-		}
-		if (strcmp(confres.gamepad1_type,"nes")==0) {
-			gpads[0].type = GPAD_TYPE_NES;
-		} else {
-			gpads[0].type = GPAD_TYPE_SNES;
-		}
-		if (strcmp(confres.gamepad2_type,"nes")==0) {
-			gpads[1].type = GPAD_TYPE_NES;
-		} else {
-			gpads[1].type = GPAD_TYPE_SNES;
-		}
-
-		if (confres.gamepad1_enabled) {
-			printf("[SNESDev-Rpi] Enabling game pad 1 with type '%s'.\n", confres.gamepad1_type);
-			gpad_open(&gpads[0]);
-			switch (gpads->type) {
-			case GPAD_TYPE_SNES:
-				uinput_gpad_open(&uinp_gpads[0], UINPUT_GPAD_TYPE_SNES);
-				break;
-			case GPAD_TYPE_NES:
-				uinput_gpad_open(&uinp_gpads[0], UINPUT_GPAD_TYPE_NES);
-				break;
-			default:
-				break;
-			}
-		}
-		if (confres.gamepad2_enabled) {
-			printf("[SNESDev-Rpi] Enabling game pad 2 with type '%s'.\n", confres.gamepad2_type);
-			gpad_open(&gpads[1]);
-			switch (gpads->type) {
-			case GPAD_TYPE_SNES:
-				uinput_gpad_open(&uinp_gpads[1], UINPUT_GPAD_TYPE_SNES);
-				break;
-			case GPAD_TYPE_NES:
-				uinput_gpad_open(&uinp_gpads[1], UINPUT_GPAD_TYPE_NES);
-				break;
-			default:
-				break;
-			}
-		}
-	}
-
-	if (confres.button_enabled) {
+	if (config.ButtonEnabled) {
 		printf("[SNESDev-Rpi] Enabling button.\n");
 		button.port = 1;
-		if (get_rpi_revision()==1) {
-			button.pin = BUTTONPIN;
-		} else {
-			button.pin = BUTTONPIN_V2;
-		}		
+        button.pin = config.ButtonGpio;
 		btn_open(&button);
 		uinput_kbd_open(&uinp_kbd);
 	}
 
 	register_signalhandlers();
 
-	///* enter the main loop */
+	uint32_t frameLength = config.NumberOfGamepads > 0 ? config.GamepadPollFrequency : config.ButtonPollFrequency;
+    uint32_t frameCount = 0;
+
 	doRun = 1;
 	while (doRun) {
-		if (confres.gamepad1_enabled || confres.gamepad2_enabled) {						
-			/* read states of the buttons */
-			for (ctr = 0; ctr < GPADSNUM; ctr++) {
-				gpad_read(&gpads[ctr]);
-			}
+        for(uint8_t i = 0; i < config.NumberOfGamepads; i++) {
+            GamepadConfig *gamepad = &config.Gamepads[i];
+            if(!gamepad->Enabled) {
+                continue;
+            }
 
-			///* send an event (pressed or released) for each button */
-			for (ctr = 0; ctr < GPADSNUM; ctr++) {
-				if ((ctr==0 && !(confres.gamepad1_enabled)) || 
-					(ctr==1 && !(confres.gamepad2_enabled))) {
-					continue;
-				}
+            // Read states of the buttons.
+            gpad_read(&gpads[i]);
 
-				gpad_read(&gpads[ctr]);
-				processPadBtn(gpads[ctr].state, EV_KEY, GPAD_SNES_A, BTN_A,
-						&uinp_gpads[ctr]);
-				processPadBtn(gpads[ctr].state, EV_KEY, GPAD_SNES_B, BTN_B,
-						&uinp_gpads[ctr]);
-				processPadBtn(gpads[ctr].state, EV_KEY, GPAD_SNES_X, BTN_X,
-						&uinp_gpads[ctr]);
-				processPadBtn(gpads[ctr].state, EV_KEY, GPAD_SNES_Y, BTN_Y,
-						&uinp_gpads[ctr]);
-				processPadBtn(gpads[ctr].state, EV_KEY, GPAD_SNES_L, BTN_TL,
-						&uinp_gpads[ctr]);
-				processPadBtn(gpads[ctr].state, EV_KEY, GPAD_SNES_R, BTN_TR,
-						&uinp_gpads[ctr]);
-				processPadBtn(gpads[ctr].state, EV_KEY, GPAD_SNES_SELECT,
-						BTN_SELECT, &uinp_gpads[ctr]);
-				processPadBtn(gpads[ctr].state, EV_KEY, GPAD_SNES_START,
-						BTN_START, &uinp_gpads[ctr]);
+            UINP_GPAD_DEV *gpad = &uinp_gpads[i];
+            const uint16_t state = gpads[i].state;
 
-				if ((gpads[ctr].state & GPAD_SNES_LEFT) == GPAD_SNES_LEFT) {
-					uinput_gpad_write(&uinp_gpads[ctr], ABS_X, 0, EV_ABS);
-				} else if ((gpads[ctr].state & GPAD_SNES_RIGHT) == GPAD_SNES_RIGHT) {
-					uinput_gpad_write(&uinp_gpads[ctr], ABS_X, 4, EV_ABS);
-				} else {
-					uinput_gpad_write(&uinp_gpads[ctr], ABS_X, 2, EV_ABS);
-				}
-				if ((gpads[ctr].state & GPAD_SNES_UP) == GPAD_SNES_UP) {
-					uinput_gpad_write(&uinp_gpads[ctr], ABS_Y, 0, EV_ABS);
-				} else if ((gpads[ctr].state & GPAD_SNES_DOWN) == GPAD_SNES_DOWN) {
-					uinput_gpad_write(&uinp_gpads[ctr], ABS_Y, 4, EV_ABS);
-				} else {
-					uinput_gpad_write(&uinp_gpads[ctr], ABS_Y, 2, EV_ABS);
-				}
-			}
-		}
+            processPadBtn(state, EV_KEY, GPAD_SNES_A, BTN_A, gpad);
+            processPadBtn(state, EV_KEY, GPAD_SNES_B, BTN_B, gpad);
+            processPadBtn(state, EV_KEY, GPAD_SNES_X, BTN_X, gpad);
+            processPadBtn(state, EV_KEY, GPAD_SNES_Y, BTN_Y, gpad);
+            processPadBtn(state, EV_KEY, GPAD_SNES_L, BTN_TL, gpad);
+            processPadBtn(state, EV_KEY, GPAD_SNES_R, BTN_TR, gpad);
+            processPadBtn(state, EV_KEY, GPAD_SNES_SELECT, BTN_SELECT, gpad);
+            processPadBtn(state, EV_KEY, GPAD_SNES_START, BTN_START, gpad);
 
-		if (confres.button_enabled) {
+            // X Axis.
+            if ((state & GPAD_SNES_LEFT) == GPAD_SNES_LEFT) {
+                uinput_gpad_write(gpad, ABS_X, 0, EV_ABS);
+            } else if ((state & GPAD_SNES_RIGHT) == GPAD_SNES_RIGHT) {
+                uinput_gpad_write(gpad, ABS_X, 4, EV_ABS);
+            } else {
+                uinput_gpad_write(gpad, ABS_X, 2, EV_ABS);
+            }
+
+            // Y Axis.
+            if ((state & GPAD_SNES_UP) == GPAD_SNES_UP) {
+                uinput_gpad_write(gpad, ABS_Y, 0, EV_ABS);
+            } else if ((state & GPAD_SNES_DOWN) == GPAD_SNES_DOWN) {
+                uinput_gpad_write(gpad, ABS_Y, 4, EV_ABS);
+            } else {
+                uinput_gpad_write(gpad, ABS_Y, 2, EV_ABS);
+            }
+        }
+
+		if (config.ButtonEnabled && frameCount == 0) {
 			btn_read(&button);
 
 			switch (button.state) {
 			case BTN_STATE_IDLE:
 				break;
 			case BTN_STATE_PRESSED:
-				if (button.pressedCtr == 1 && button.duration >= 1) {
-					uinput_kbd_write(&uinp_kbd, KEY_R, 1, EV_KEY);
-				}
+				uinput_kbd_write(&uinp_kbd, KEY_ESC, 1, EV_KEY);
 				break;
 			case BTN_STATE_RELEASED:
-					if (button.pressedCtr == 1 && button.duration >= 1) {
-						uinput_kbd_write(&uinp_kbd, KEY_R, 0, EV_KEY);
-					} else if (button.pressedCtr == 3 && button.duration >= 1) {
-						// Sending ESC
-						uinput_kbd_write(&uinp_kbd, KEY_ESC, 1, EV_KEY);
-						usleep(50000);
-						uinput_kbd_write(&uinp_kbd, KEY_ESC, 0, EV_KEY);
-					} else if (button.pressedCtr == 5 && button.duration >= 1) {
-						uinput_kbd_write(&uinp_kbd, KEY_F4, 1, EV_KEY);
-						usleep(50000);
-						uinput_kbd_write(&uinp_kbd, KEY_F4, 0, EV_KEY);
-						// shutting down
-						system("shutdown -t 3 -h now");
-					}
+                uinput_kbd_write(&uinp_kbd, KEY_ESC, 0, EV_KEY);
 				break;
 			}
 		}
 
-		/* wait for some time to keep the CPU load low */
-		if (confres.button_enabled && !(confres.gamepad1_enabled || confres.gamepad2_enabled)) {
-			bcm2835_delay(FRAMEWAITLONG);
-		} else {
-			bcm2835_delay(FRAMEWAIT);
-		}
+        frameCount = (frameCount + frameLength) % config.ButtonPollFrequency;
+        bcm2835_delay(frameLength);
 	}
 
 	return 0;

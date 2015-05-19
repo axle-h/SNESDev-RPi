@@ -27,19 +27,14 @@
 
 #pragma once
 
- #include <stdint.h>
-
-typedef enum {
-	UINPUT_GPAD_TYPE_NES  = 0,
-	UINPUT_GPAD_TYPE_SNES = 1
-} UINPUT_GPAD_TYPE_E;
+#include <stdint.h>
 
 typedef struct  {
 	int16_t fd;
 	int16_t state;
 } UINP_GPAD_DEV;
 
-int16_t uinput_gpad_open   (UINP_GPAD_DEV* const gpad, UINPUT_GPAD_TYPE_E type);
+int16_t uinput_gpad_open   (UINP_GPAD_DEV* const gpad);
 int16_t uinput_gpad_close  (UINP_GPAD_DEV* const gpad);
 int16_t uinput_gpad_write  (UINP_GPAD_DEV* const gpad, uint16_t keycode, int16_t keyvalue, uint16_t evtype);
 

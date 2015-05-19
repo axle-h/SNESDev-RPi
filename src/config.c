@@ -2,7 +2,6 @@
 #include <confuse.h>
 #include <unistd.h>
 #include <string.h>
-#include <malloc.h>
 #include <stdlib.h>
 #include <argp.h>
 #include "config.h"
@@ -14,7 +13,6 @@
 #define CFG_GPIO "Gpio"
 #define CFG_POLL_FREQ "PollFrequency"
 
-#define MAX_GAMEPADS 2
 #define CFG_GAMEPADS "Gamepads"
 #define CFG_GAMEPAD "Gamepad"
 #define CFG_GAMEPAD_TYPE "Type"
@@ -40,11 +38,11 @@ static const struct argp_option options[] = {
         { 0 }
 };
 
-static const bool ValidateConfig(SNESDevConfig *config);
+static const bool ValidateConfig(SNESDevConfig *config, const int maxGamepads);
 static const int VerifyGamepadType(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result);
 static const Arguments ParseArguments(int argc, char **argv);
 
-bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNESDevConfig *config) {
+bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, const int maxGamepads, SNESDevConfig *config) {
     const Arguments arguments = ParseArguments(argc, argv);
 
     cfg_opt_t GamepadOpts[] = {
@@ -95,6 +93,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
     uint8_t n = (uint8_t) cfg_size(gamepadsSection, CFG_GAMEPAD);
     GamepadConfig gamepads[n];
 
+    // TODO: Sort by gamepad id.
     for(uint8_t i = 0; i < n; i++) {
         cfg_t *gamepadSection = cfg_getnsec(gamepadsSection, CFG_GAMEPAD, i);
         GamepadConfig gamepad;
@@ -117,7 +116,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
 
     cfg_free(cfg);
 
-    if(!ValidateConfig(config)) {
+    if(!ValidateConfig(config, maxGamepads)) {
         return false;
     }
 
@@ -125,7 +124,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
 }
 
 
-static const bool ValidateConfig(SNESDevConfig *config) {
+static const bool ValidateConfig(SNESDevConfig *config, const int maxGamepads) {
     if(config->RunAsDaemon && config->PidFile == NULL) {
         fprintf(stderr, "PID file required when running as daemon\n");
         return false;
@@ -154,7 +153,7 @@ static const bool ValidateConfig(SNESDevConfig *config) {
     bool anyEnabled = false;
     for(int i = 0; i < config->NumberOfGamepads; i++) {
         GamepadConfig *gamepad = &config->Gamepads[i];
-        if(gamepad == NULL || gamepad->DataGpio <= 0 || gamepad->Id < 1 || gamepad->Id > MAX_GAMEPADS) {
+        if(gamepad == NULL || gamepad->DataGpio <= 0 || gamepad->Id < 1 || gamepad->Id > maxGamepads) {
             fprintf(stderr, "Bad gamepad config\n");
             return false;
         }

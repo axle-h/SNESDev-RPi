@@ -27,4 +27,4 @@ typedef struct {
 } SNESDevConfig;
 
 
-bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNESDevConfig *config);
+bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, const int maxGamepads, SNESDevConfig *config);
