@@ -18,7 +18,7 @@
 
 # PATH should only include /usr/* if it runs after the mountnfs.sh script
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
-DESC="SNESDev GPIO Adapter daemon"
+DESC="(S)NES controller user-space driver for Raspberry Pi GPIO"
 NAME=SNESDev
 DAEMON=@CMAKE_INSTALL_PREFIX@/sbin/$NAME
 DAEMON_ARGS=""

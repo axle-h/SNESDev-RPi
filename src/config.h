@@ -13,6 +13,7 @@ typedef struct {
 } GamepadConfig;
 
 typedef struct {
+    bool RunAsDaemon;
     bool DebugEnabled;
     const char *PidFile;
     uint8_t NumberOfGamepads;
@@ -26,4 +27,4 @@ typedef struct {
 } SNESDevConfig;
 
 
-bool TryGetSNESDevConfig(const char *fileName, SNESDevConfig *config);
+bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNESDevConfig *config);

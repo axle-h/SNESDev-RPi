@@ -140,19 +140,18 @@ int readConfigurationfile() {
 int main(int argc, char *argv[]) {
 
     SNESDevConfig config;
-    if(!TryGetSNESDevConfig(CONFIG_FILE, &config)) {
+    if(!TryGetSNESDevConfig(CONFIG_FILE, argc, argv, &config)) {
         return EXIT_FAILURE;
     }
 
-    printf("DebugEnabled: %s, PidFile: %s\n",
-           config.DebugEnabled ? true_str : false_str, config.PidFile);
+    printf("RunAsDaemon: %s, DebugEnabled: %s, PidFile: %s\n",
+		   config.RunAsDaemon ? true_str : false_str, config.DebugEnabled ? true_str : false_str, config.PidFile);
     printf("ClockGpio: %u, LatchGpio: %u, GamepadPollFrequency: %u\n",
            config.ClockGpio, config.LatchGpio, config.GamepadPollFrequency);
 
     for(unsigned int i=0; i<config.NumberOfGamepads; i++) {
-        GamepadConfig gamepad;
-        gamepad = config.Gamepads[i];
-        printf("Gamepad %u, Enabled: %s, Type: %d, Gpio: %u\n", gamepad.Id, gamepad.Enabled ? true_str : false_str, gamepad.Type, gamepad.DataGpio);
+        GamepadConfig *gamepad = &config.Gamepads[i];
+        printf("Gamepad %u, Enabled: %s, Type: %d, Gpio: %u\n", gamepad->Id, gamepad->Enabled ? true_str : false_str, gamepad->Type, gamepad->DataGpio);
     }
 
     printf("ButtonEnabled: %s, ButtonGpio: %u, ButtonPollFrequency: %u\n",

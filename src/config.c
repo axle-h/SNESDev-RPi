@@ -4,10 +4,9 @@
 #include <string.h>
 #include <malloc.h>
 #include <stdlib.h>
+#include <argp.h>
 #include "config.h"
 
-#define CFG_DEBUG_ENABLED "DebugEnabled"
-#define CFG_PID_FILE "PidFile"
 #define CFG_CLOCK_GPIO "ClockGpio"
 #define CFG_LATCH_GPIO "LatchGpio"
 
@@ -21,9 +20,33 @@
 #define CFG_GAMEPAD_TYPE "Type"
 #define CFG_BUTTON "Button"
 
-int VerifyGamepadType(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result);
+#define OPT_USAGE ""
+#define OPT_HELP "(S)NES controller user-space driver for Raspberry Pi GPIO"
+#define OPT_DEBUG -1
+#define OPT_DAEMON 'd'
+#define OPT_PIDFILE 'p'
 
-bool TryGetSNESDevConfig(const char *fileName, SNESDevConfig *config) {
+typedef struct {
+    bool RunAsDaemon;
+    bool DebugEnabled;
+    const char *PidFile;
+} Arguments;
+
+static const error_t ParseOption(int key, char *arg, struct argp_state *state);
+static const struct argp_option options[] = {
+        { "daemon", OPT_DAEMON, 0, 0, "Run as a daemon" },
+        { "debug", OPT_DEBUG, 0, 0, "Run with debug options set in gpio library" },
+        { "pidfile", OPT_PIDFILE, "FILE", 0, "Write PID to FILE" },
+        { 0 }
+};
+
+static const bool ValidateConfig(SNESDevConfig *config);
+static const int VerifyGamepadType(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result);
+static const Arguments ParseArguments(int argc, char **argv);
+
+bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNESDevConfig *config) {
+    const Arguments arguments = ParseArguments(argc, argv);
+
     cfg_opt_t GamepadOpts[] = {
             CFG_BOOL(CFG_ENABLED, cfg_false, CFGF_NONE),
             CFG_INT_CB(CFG_GAMEPAD_TYPE, 0, CFGF_NONE, &VerifyGamepadType),
@@ -47,8 +70,6 @@ bool TryGetSNESDevConfig(const char *fileName, SNESDevConfig *config) {
     };
 
     cfg_opt_t opts[] = {
-            CFG_BOOL(CFG_DEBUG_ENABLED, cfg_false, CFGF_NONE),
-            CFG_STR(CFG_PID_FILE, 0, CFGF_NONE),
             CFG_SEC(CFG_GAMEPADS, GamepadsOpts, CFGF_NONE),
             CFG_SEC(CFG_BUTTON, ButtonOpts, CFGF_NONE),
             CFG_END()
@@ -61,12 +82,9 @@ bool TryGetSNESDevConfig(const char *fileName, SNESDevConfig *config) {
         return false;
     }
 
-    config->DebugEnabled = cfg_getbool(cfg, CFG_DEBUG_ENABLED);
-
-    char *pidFile = cfg_getstr(cfg, CFG_PID_FILE);
-    char *tmp = malloc(sizeof pidFile);
-    strcpy(tmp, pidFile);
-    config->PidFile = tmp;
+    config->RunAsDaemon = !arguments.DebugEnabled && arguments.RunAsDaemon;
+    config->DebugEnabled = arguments.DebugEnabled;
+    config->PidFile = arguments.PidFile;
 
     // Parse gamepad section
     cfg_t *gamepadsSection = cfg_getsec(cfg, CFG_GAMEPADS);
@@ -80,17 +98,7 @@ bool TryGetSNESDevConfig(const char *fileName, SNESDevConfig *config) {
     for(uint8_t i = 0; i < n; i++) {
         cfg_t *gamepadSection = cfg_getnsec(gamepadsSection, CFG_GAMEPAD, i);
         GamepadConfig gamepad;
-        int id = atoi(cfg_title(gamepadSection));
-        if(id <= 0) {
-            cfg_error(cfg, "Must specify gamepad id");
-            return false;
-        }
-        if(id > MAX_GAMEPADS) {
-            cfg_error(cfg, "Only %d gamepads supported", MAX_GAMEPADS);
-            return false;
-        }
-
-        gamepad.Id = (uint8_t) id;
+        gamepad.Id = (uint8_t) atoi(cfg_title(gamepadSection));
         gamepad.Enabled = cfg_getbool(gamepadSection, CFG_ENABLED) ? true : false;
         gamepad.Type = (GPAD_TYPE)cfg_getint(gamepadSection, CFG_GAMEPAD_TYPE);
         gamepad.DataGpio = (uint8_t) cfg_getint(gamepadSection, CFG_GPIO);
@@ -108,11 +116,76 @@ bool TryGetSNESDevConfig(const char *fileName, SNESDevConfig *config) {
     config->ButtonPollFrequency = (uint32_t) cfg_getint(buttonSection, CFG_POLL_FREQ);
 
     cfg_free(cfg);
+
+    if(!ValidateConfig(config)) {
+        return false;
+    }
+
     return true;
 }
 
 
-int VerifyGamepadType(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result)
+static const bool ValidateConfig(SNESDevConfig *config) {
+    if(config->RunAsDaemon && config->PidFile == NULL) {
+        fprintf(stderr, "PID file required when running as daemon\n");
+        return false;
+    }
+
+    if(config->GamepadPollFrequency <= 0) {
+        fprintf(stderr, "Gamepad %s Must be > 0\n", CFG_POLL_FREQ);
+        return false;
+    }
+
+    if(config->ClockGpio == 0) {
+        fprintf(stderr, "%s must be > 0\n", CFG_CLOCK_GPIO);
+        return false;
+    }
+
+    if(config->LatchGpio == 0) {
+        fprintf(stderr, "%s must be > 0\n", CFG_LATCH_GPIO);
+        return false;
+    }
+
+    if(config->NumberOfGamepads == 0) {
+        fprintf(stderr, "No gamepads configured\n");
+        return false;
+    }
+
+    bool anyEnabled = false;
+    for(int i = 0; i < config->NumberOfGamepads; i++) {
+        GamepadConfig *gamepad = &config->Gamepads[i];
+        if(gamepad == NULL || gamepad->DataGpio <= 0 || gamepad->Id < 1 || gamepad->Id > MAX_GAMEPADS) {
+            fprintf(stderr, "Bad gamepad config\n");
+            return false;
+        }
+        if(gamepad->Enabled) {
+            anyEnabled = true;
+        }
+    }
+
+    if(!anyEnabled) {
+        fprintf(stderr, "No gamepads configured\n");
+        return false;
+    }
+
+    if(!config->ButtonEnabled) {
+        return true;
+    }
+
+    if(config->ButtonGpio <= 0) {
+        fprintf(stderr, "Button %s Must be > 0\n", CFG_GPIO);
+        return false;
+    }
+
+    if(config->ButtonPollFrequency <= 0) {
+        fprintf(stderr, "Button %s Must be > 0\n", CFG_POLL_FREQ);
+        return false;
+    }
+
+    return true;
+}
+
+static const int VerifyGamepadType(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result)
 {
     if(strcmp(value, "snes") == 0)
         *(long int *)result = GPAD_TYPE_SNES;
@@ -121,6 +194,39 @@ int VerifyGamepadType(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *resul
     else {
         cfg_error(cfg, "Gamepad type must be snes or nes");
         return -1;
+    }
+    return 0;
+}
+
+
+static const Arguments ParseArguments(const int argc, char **argv) {
+    Arguments arguments;
+    arguments.RunAsDaemon = false;
+    arguments.DebugEnabled = false;
+    arguments.PidFile = NULL;
+
+    const struct argp argp = { options, ParseOption, OPT_USAGE, OPT_HELP };
+    argp_parse (&argp, argc, argv, 0, 0, &arguments);
+
+    return arguments;
+}
+
+static const error_t ParseOption(int key, char *arg, struct argp_state *state) {
+    Arguments *arguments = state->input;
+
+    switch (key)
+    {
+        case OPT_DAEMON:
+            arguments->RunAsDaemon = true;
+            break;
+        case OPT_PIDFILE:
+            arguments->PidFile = arg;
+            break;
+        case OPT_DEBUG:
+            arguments->DebugEnabled = true;
+            break;
+        default:
+            return ARGP_ERR_UNKNOWN;
     }
     return 0;
 }
