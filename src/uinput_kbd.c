@@ -35,68 +35,70 @@
 #include "uinput_kbd.h"
 
 
-/* Setup the uinput keyboard device */
-int16_t uinput_kbd_open(UINP_KBD_DEV* const kbd)
+#define UINPUT_DEVICE "/dev/uinput"
+#define UINPUT_DEVICE_NAME "SNESDev Keyboard"
+
+bool OpenVirtualKeyboard(VirtualKeyboard *const keyboard)
 {
-	kbd->fd = open("/dev/uinput", O_WRONLY | O_NDELAY);
-	if (kbd->fd == 0) {
-		printf("Unable to open /dev/uinput\n");
-		return -1;
+	keyboard->FileDescriptor = open(UINPUT_DEVICE, O_WRONLY | O_NDELAY);
+	if (keyboard->FileDescriptor < 0) {
+		fprintf(stderr, "Unable to open %s\n", UINPUT_DEVICE);
+		return false;
 	}
 
-	struct uinput_user_dev uinp;
-	memset(&uinp, 0, sizeof(uinp));
-	strncpy(uinp.name, "SNES-to-Keyboard Device", strlen("SNES-to-Keyboard Device"));
-	uinp.id.version = 4;
-	uinp.id.bustype = BUS_USB;
-	uinp.id.product = 1;
-	uinp.id.vendor = 1;
+	struct uinput_user_dev device;
+	memset(&device, 0, sizeof(device));
+	strncpy(device.name, UINPUT_DEVICE_NAME, strlen(UINPUT_DEVICE_NAME));
+	device.id.version = 4;
+	device.id.bustype = BUS_USB;
+	device.id.product = 1;
+	device.id.vendor = 1;
 
-	// Setup the uinput device
-	// keyboard
-	ioctl(kbd->fd, UI_SET_EVBIT, EV_KEY);
-	ioctl(kbd->fd, UI_SET_EVBIT, EV_REL);
-	int i = 0;
-	for (i = 0; i < 256; i++) {
-		ioctl(kbd->fd, UI_SET_KEYBIT, i);
+	// Setup the uinput device as a keyboard
+	ioctl(keyboard->FileDescriptor, UI_SET_EVBIT, EV_KEY);
+	ioctl(keyboard->FileDescriptor, UI_SET_EVBIT, EV_REL);
+    for (int i = 0; i < 256; i++) {
+		ioctl(keyboard->FileDescriptor, UI_SET_KEYBIT, i);
 	}
 
-	/* Create input device into input sub-system */
-	write(kbd->fd, &uinp, sizeof(uinp));
-	if (ioctl(kbd->fd, UI_DEV_CREATE)) {
-		printf("[SNESDev-Rpi] Unable to create UINPUT device.");
-		return -1;
+	// Create input device into input sub-system
+	write(keyboard->FileDescriptor, &device, sizeof(device));
+	if (ioctl(keyboard->FileDescriptor, UI_DEV_CREATE)) {
+		return false;
 	}
 
-	return kbd->fd;
+	return true;
 }
 
-int16_t uinput_kbd_close  (UINP_KBD_DEV* const kbd)
+bool CloseVirtualKeyboard(VirtualKeyboard *const keyboard)
 {
-	ioctl(kbd->fd, UI_DEV_DESTROY);
-	return close(kbd->fd);
+	ioctl(keyboard->FileDescriptor, UI_DEV_DESTROY);
+	return close(keyboard->FileDescriptor) == 0;
 }
 
-/* sends a key event to the virtual device */
-int16_t uinput_kbd_write(UINP_KBD_DEV* const kbd, unsigned int keycode, int keyvalue, unsigned int evtype)
+bool WriteToVirtualKeyboard(VirtualKeyboard *const keyboard, unsigned short int key, bool keyPressed)
 {
 	struct input_event event;
-	gettimeofday(&event.time, NULL);
+    memset(&event, 0, sizeof(event));
 
-	event.type = evtype;
-	event.code = keycode;
-	event.value = keyvalue;
+	event.type = EV_KEY;
+	event.code = key;
+	event.value = keyPressed;
 
-	if (write(kbd->fd, &event, sizeof(event)) < 0) {
-		printf("[SNESDev-Rpi] Simulate key error\n");
+	if (write(keyboard->FileDescriptor, &event, sizeof(event)) <= 0) {
+        fprintf(stderr, "Unable to write key to '%s'\n", UINPUT_DEVICE_NAME);
+        return false;
 	}
 
+    // TODO: Check whether this sync stuff is needed for a keyboard. Think it's a bit overkill.
 	event.type = EV_SYN;
 	event.code = SYN_REPORT;
 	event.value = 0;
-	write(kbd->fd, &event, sizeof(event));
-	if (write(kbd->fd, &event, sizeof(event)) < 0) {
-		printf("[SNESDev-Rpi] Simulate key error\n");
+
+	if (write(keyboard->FileDescriptor, &event, sizeof(event)) <= 0) {
+        fprintf(stderr, "Unable to write key to '%s'\n", UINPUT_DEVICE_NAME);
+        return false;
 	}
-	return 0;
+
+    return true;
 }

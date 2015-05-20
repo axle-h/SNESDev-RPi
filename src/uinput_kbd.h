@@ -28,12 +28,13 @@
 #pragma once
 
  #include <stdint.h>
+#include <stdbool.h>
 
 typedef struct {
-	int16_t fd;
-} UINP_KBD_DEV;
+	int16_t FileDescriptor;
+} VirtualKeyboard;
 
-int16_t uinput_kbd_open   (UINP_KBD_DEV* const kbd);
-int16_t uinput_kbd_close  (UINP_KBD_DEV* const kbd);
-int16_t uinput_kbd_write  (UINP_KBD_DEV* const kbd, unsigned int keycode, int keyvalue, unsigned int evtype);
+bool OpenVirtualKeyboard(VirtualKeyboard *const keyboard);
+bool CloseVirtualKeyboard(VirtualKeyboard *const keyboard);
+bool WriteToVirtualKeyboard(VirtualKeyboard *const keyboard, unsigned short int key, bool keyPressed);
 

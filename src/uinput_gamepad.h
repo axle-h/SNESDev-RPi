@@ -32,9 +32,9 @@
 typedef struct  {
 	int16_t fd;
 	int16_t state;
-} UINP_GPAD_DEV;
+} VirtualGamepad;
 
-int16_t uinput_gpad_open   (UINP_GPAD_DEV* const gpad);
-int16_t uinput_gpad_close  (UINP_GPAD_DEV* const gpad);
-int16_t uinput_gpad_write  (UINP_GPAD_DEV* const gpad, uint16_t keycode, int16_t keyvalue, uint16_t evtype);
+int16_t uinput_gpad_open   (VirtualGamepad * const gpad);
+int16_t uinput_gpad_close  (VirtualGamepad * const gpad);
+int16_t uinput_gpad_write  (VirtualGamepad * const gpad, uint16_t keycode, int16_t keyvalue, uint16_t evtype);
 

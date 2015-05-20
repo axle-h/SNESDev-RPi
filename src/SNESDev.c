@@ -26,10 +26,8 @@
  */
 
 #include <linux/uinput.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <bcm2835.h>
 #include <signal.h>
 
@@ -39,6 +37,7 @@
 #include "uinput_gamepad.h"
 
 #include "config.h"
+#include "daemon.h"
 
 #define true_str "true"
 #define false_str "false"
@@ -47,42 +46,17 @@
 
 #define CONFIG_FILE "/etc/gpio/snesdev.cfg"
 
-int16_t doRun, pollButton, pollPads;
-UINP_KBD_DEV uinp_kbd;
-UINP_GPAD_DEV uinp_gpads[MAX_GAMEPADS];
+bool running;
+VirtualKeyboard virtualKeyboard;
+VirtualGamepad *virtualGamepads;
+SNESDevConfig config;
 
-/* Signal callback function */
-void sig_handler(int signo) {
-	int16_t ctr = 0;
 
-	if ((signo == SIGINT) | (signo == SIGQUIT) | (signo == SIGABRT) | (signo =
-			SIGTERM)) {
-		printf("Releasing SNESDev-Rpi device(s).\n");
-		pollButton = 0;
-		pollPads = 0;
-		uinput_kbd_close(&uinp_kbd);
-		for (ctr = 0; ctr < MAX_GAMEPADS; ctr++) {
-			uinput_gpad_close(&uinp_gpads[ctr]);
-		}
-
-		doRun = 0;
-	}
-}
-
-void register_signalhandlers() {
-	/* Register signal handlers  */
-	if (signal(SIGINT, sig_handler) == SIG_ERR )
-		printf("\n[SNESDev-Rpi] Cannot catch SIGINT\n");
-	if (signal(SIGQUIT, sig_handler) == SIG_ERR )
-		printf("\n[SNESDev-Rpi] Cannot catch SIGQUIT\n");
-	if (signal(SIGABRT, sig_handler) == SIG_ERR )
-		printf("\n[SNESDev-Rpi] Cannot catch SIGABRT\n");
-	if (signal(SIGTERM, sig_handler) == SIG_ERR )
-		printf("\n[SNESDev-Rpi] Cannot catch SIGTERM\n");
-}
+void SetupSignals();
+void SignalHander(int signal);
 
 /* checks, if a button on the pad is pressed and sends an event according the button state. */
-static inline void processPadBtn(uint16_t buttons, uint16_t evtype, uint16_t mask, uint16_t key, UINP_GPAD_DEV* uinp_gpad) {
+static inline void processPadBtn(uint16_t buttons, uint16_t evtype, uint16_t mask, uint16_t key, VirtualGamepad * uinp_gpad) {
 	if ((buttons & mask) == mask) {
 		uinput_gpad_write(uinp_gpad, key, 1, evtype);
 	} else {
@@ -92,7 +66,6 @@ static inline void processPadBtn(uint16_t buttons, uint16_t evtype, uint16_t mas
 
 int main(int argc, char *argv[]) {
 
-    SNESDevConfig config;
     if(!TryGetSNESDevConfig(CONFIG_FILE, argc, argv, MAX_GAMEPADS, &config)) {
         return EXIT_FAILURE;
     }
@@ -116,8 +89,14 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
+    if(config.RunAsDaemon) {
+        StartDaemon(config.PidFile);
+    }
+
     GPAD_ST gpads[config.NumberOfGamepads];
     BTN_DEV_ST button;
+
+    virtualGamepads = malloc(config.NumberOfGamepads * sizeof(*virtualGamepads));
 
 	if (config.NumberOfGamepads > 0) {
 
@@ -130,11 +109,13 @@ int main(int argc, char *argv[]) {
             gpads[i].pin_data = gamepad->DataGpio;
             gpads[i].type = gamepad->Type;
 
+            virtualGamepads[i] = NULL;
+
             if(gamepad->Enabled) {
                 printf("[SNESDev-Rpi] Enabling game pad %d with type '%s'.\n",
                        gamepad->Id, gamepad->Type == GPAD_TYPE_NES ? "NES" : "SNES");
                 gpad_open(&gpads[i]);
-                uinput_gpad_open(&uinp_gpads[0]);
+                uinput_gpad_open(&virtualGamepads[i]);
             }
         }
 	}
@@ -144,16 +125,17 @@ int main(int argc, char *argv[]) {
 		button.port = 1;
         button.pin = config.ButtonGpio;
 		btn_open(&button);
-		uinput_kbd_open(&uinp_kbd);
+        OpenVirtualKeyboard(&virtualKeyboard);
 	}
 
-	register_signalhandlers();
+    SetupSignals();
 
 	uint32_t frameLength = config.NumberOfGamepads > 0 ? config.GamepadPollFrequency : config.ButtonPollFrequency;
-    uint32_t frameCount = 0;
+    uint8_t buttonFrameDelay = (uint8_t) ((frameLength + config.ButtonPollFrequency - 1) / config.ButtonPollFrequency);
+    uint8_t frameDelayCount = 0;
 
-	doRun = 1;
-	while (doRun) {
+	running = true;
+	while (running) {
         for(uint8_t i = 0; i < config.NumberOfGamepads; i++) {
             GamepadConfig *gamepad = &config.Gamepads[i];
             if(!gamepad->Enabled) {
@@ -163,7 +145,7 @@ int main(int argc, char *argv[]) {
             // Read states of the buttons.
             gpad_read(&gpads[i]);
 
-            UINP_GPAD_DEV *gpad = &uinp_gpads[i];
+            VirtualGamepad *gpad = &virtualGamepads[i];
             const uint16_t state = gpads[i].state;
 
             processPadBtn(state, EV_KEY, GPAD_SNES_A, BTN_A, gpad);
@@ -194,25 +176,45 @@ int main(int argc, char *argv[]) {
             }
         }
 
-		if (config.ButtonEnabled && frameCount == 0) {
+		if (config.ButtonEnabled && frameDelayCount == 0) {
 			btn_read(&button);
 
 			switch (button.state) {
 			case BTN_STATE_IDLE:
 				break;
 			case BTN_STATE_PRESSED:
-				uinput_kbd_write(&uinp_kbd, KEY_ESC, 1, EV_KEY);
+                WriteToVirtualKeyboard(&virtualKeyboard, KEY_ESC, true);
 				break;
 			case BTN_STATE_RELEASED:
-                uinput_kbd_write(&uinp_kbd, KEY_ESC, 0, EV_KEY);
+                WriteToVirtualKeyboard(&virtualKeyboard, KEY_ESC, false);
 				break;
 			}
 		}
 
-        frameCount = (frameCount + frameLength) % config.ButtonPollFrequency;
+        frameDelayCount = ++frameDelayCount % buttonFrameDelay;
         bcm2835_delay(frameLength);
 	}
 
 	return 0;
+}
 
+
+void SetupSignals() {
+    // Catch, ignore and handle signals
+    signal(SIGCHLD, SIG_IGN);
+    signal(SIGTSTP, SIG_IGN);
+    signal(SIGTTOU, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
+    signal(SIGTERM, SignalHander);
+    signal(SIGINT, SignalHander);
+}
+
+void SignalHander(int signal) {
+    CloseVirtualKeyboard(&virtualKeyboard);
+    for (uint8_t i = 0; i < config.NumberOfGamepads; i++) {
+        uinput_gpad_close(&virtualGamepads[i]);
+    }
+
+    running = false;
 }

@@ -57,7 +57,7 @@ static void send_key_event(int fd, unsigned int keycode, int keyvalue, unsigned 
 }
 
 /* Setup the uinput device */
-int16_t uinput_gpad_open(UINP_GPAD_DEV* const gpad) {
+int16_t uinput_gpad_open(VirtualGamepad * const gpad) {
 	int16_t uinp_fd;
 	gpad->fd = open("/dev/uinput", O_WRONLY | O_NDELAY);
 	if (gpad->fd == 0) {
@@ -108,13 +108,13 @@ int16_t uinput_gpad_open(UINP_GPAD_DEV* const gpad) {
 	return uinp_fd;
 }
 
-int16_t uinput_gpad_close(UINP_GPAD_DEV* const gpad) {
+int16_t uinput_gpad_close(VirtualGamepad * const gpad) {
 	ioctl(gpad->fd, UI_DEV_DESTROY);
 	return close(gpad->fd);
 }
 
 /* sends a key event to the virtual device */
-int16_t uinput_gpad_write(UINP_GPAD_DEV* const gpad, uint16_t keycode, int16_t keyvalue, uint16_t evtype) {
+int16_t uinput_gpad_write(VirtualGamepad * const gpad, uint16_t keycode, int16_t keyvalue, uint16_t evtype) {
 	struct input_event event;
 	gettimeofday(&event.time, NULL);
 
