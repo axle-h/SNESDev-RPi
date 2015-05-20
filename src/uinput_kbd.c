@@ -38,6 +38,8 @@
 #define UINPUT_DEVICE "/dev/uinput"
 #define UINPUT_DEVICE_NAME "SNESDev Keyboard"
 
+DEFINE_ENUM(VirtualKey, VIRTUAL_KEYS, size_t)
+
 bool OpenVirtualKeyboard(VirtualKeyboard *const keyboard)
 {
 	keyboard->FileDescriptor = open(UINPUT_DEVICE, O_WRONLY | O_NDELAY);
@@ -54,16 +56,17 @@ bool OpenVirtualKeyboard(VirtualKeyboard *const keyboard)
 	device.id.product = 1;
 	device.id.vendor = 1;
 
-	// Setup the uinput device as a keyboard
+	// Setup the uinput device as a keyboard with basic keys
 	ioctl(keyboard->FileDescriptor, UI_SET_EVBIT, EV_KEY);
 	ioctl(keyboard->FileDescriptor, UI_SET_EVBIT, EV_REL);
-    for (int i = 0; i < 256; i++) {
-		ioctl(keyboard->FileDescriptor, UI_SET_KEYBIT, i);
+
+    for (int i = 0; i < TotalVirtualKeys; i++) {
+		ioctl(keyboard->FileDescriptor, UI_SET_KEYBIT, VirtualKeyValues[i]);
 	}
 
-	// Create input device into input sub-system
+	// Add input device into input sub-system
 	write(keyboard->FileDescriptor, &device, sizeof(device));
-	if (ioctl(keyboard->FileDescriptor, UI_DEV_CREATE)) {
+	if (ioctl(keyboard->FileDescriptor, UI_DEV_CREATE) < 0) {
 		return false;
 	}
 
@@ -90,15 +93,7 @@ bool WriteToVirtualKeyboard(VirtualKeyboard *const keyboard, unsigned short int 
         return false;
 	}
 
-    // TODO: Check whether this sync stuff is needed for a keyboard. Think it's a bit overkill.
-	event.type = EV_SYN;
-	event.code = SYN_REPORT;
-	event.value = 0;
-
-	if (write(keyboard->FileDescriptor, &event, sizeof(event)) <= 0) {
-        fprintf(stderr, "Unable to write key to '%s'\n", UINPUT_DEVICE_NAME);
-        return false;
-	}
+    // TODO: Check whether a type = EV_SYN, code = SYN_REPORT event is needed. Think it's a bit overkill.
 
     return true;
 }

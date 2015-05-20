@@ -109,8 +109,6 @@ int main(int argc, char *argv[]) {
             gpads[i].pin_data = gamepad->DataGpio;
             gpads[i].type = gamepad->Type;
 
-            virtualGamepads[i] = NULL;
-
             if(gamepad->Enabled) {
                 printf("[SNESDev-Rpi] Enabling game pad %d with type '%s'.\n",
                        gamepad->Id, gamepad->Type == GPAD_TYPE_NES ? "NES" : "SNES");
