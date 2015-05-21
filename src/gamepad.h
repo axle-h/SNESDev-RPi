@@ -52,9 +52,9 @@ DECLARE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE)
 /* holds the GPIO pins for the clock, strobe and data signals */
 typedef struct {
     GamepadType type;
-	int16_t pin_clock;
-	int16_t pin_strobe;
-	int16_t pin_data;
+	uint8_t pin_clock;
+	uint8_t pin_strobe;
+	uint8_t pin_data;
 	uint16_t state;
 } GPAD_ST;
 

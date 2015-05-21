@@ -27,17 +27,20 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 typedef enum {
 	GPIO_OUTPUT = 0,
 	GPIO_INPUT  = 1
-} GPIO_DIR;
+} GpioDirection;
 
 typedef enum {
 	GPIO_LOW  = 0,
 	GPIO_HIGH = 1
-} GPIO_VALUE;
+} GpioLevel;
 
-int16_t          gpio_open       (int16_t pin, GPIO_DIR direction);
-uint8_t          gpio_read_pin   (int16_t pin);
-int16_t          gpio_write_pin  (int16_t pin, GPIO_VALUE val);
+bool GpioOpen(uint8_t pin, GpioDirection direction);
+GpioLevel GpioRead(uint8_t pin);
+void GpioWrite(uint8_t pin, GpioLevel val);
+void GpioPulse(uint8_t pin);
 

@@ -26,41 +26,45 @@
  */
  
 #include <bcm2835.h>
+#include <stdbool.h>
 
 #include "GPIO.h"
 
-int16_t gpio_open(int16_t pin, GPIO_DIR direction)
+bool GpioOpen(uint8_t pin, GpioDirection direction)
 {
-	if (direction==GPIO_OUTPUT) {
-		bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_OUTP);
-	} else if (direction==GPIO_INPUT) {		
-		bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
-	} else {
-		return -1;
-	}	
-	return 0;
+	switch (direction){
+		case GPIO_OUTPUT:
+			bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_OUTP);
+			return true;
+		case GPIO_INPUT:
+			bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
+			return true;
+	}
+
+	return false;
 }
 
-uint8_t gpio_read_pin (int16_t pin)
+GpioLevel GpioRead(uint8_t pin)
 {
-	uint8_t val = bcm2835_gpio_lev(pin);
-	if (val==HIGH) {
-		return GPIO_HIGH;
-	} else if (val==LOW) {
-		return GPIO_LOW;
-	} else {
-		return -1;
-	}
+	return bcm2835_gpio_lev(pin) == HIGH ? GPIO_HIGH : GPIO_LOW;
 }
 
-int16_t gpio_write_pin  (int16_t pin, GPIO_VALUE val)
-{
-	if (val==GPIO_HIGH) {
-		bcm2835_gpio_write( pin, HIGH );
-	} else if (val==GPIO_LOW) {
-		bcm2835_gpio_write( pin, LOW );
-	} else {
-		return -1;
+void GpioWrite(uint8_t pin, GpioLevel val) {
+
+	switch (val) {
+		case GPIO_LOW:
+			bcm2835_gpio_write(pin, HIGH);
+			break;
+		case GPIO_HIGH:
+			bcm2835_gpio_write(pin, LOW);
+            break;
 	}
-	return 0;
+	return;
+}
+
+void GpioPulse(uint8_t pin) {
+    bcm2835_gpio_write(pin, HIGH);
+    delayMicroseconds(2);
+    bcm2835_gpio_write(pin, LOW);
+    delayMicroseconds(2);
 }

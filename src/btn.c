@@ -30,12 +30,12 @@
 
 int16_t btn_open(BTN_DEV_ST * btn) {
 	btn->state = BTN_STATE_IDLE;
-	return gpio_open(btn->pin, GPIO_INPUT);
+	return GpioOpen(btn->pin, GPIO_INPUT);
 }
 
 void btn_read(BTN_DEV_ST* const btn) {
 	// read the state of the button into a local variable
-	uint8_t buttonState = gpio_read_pin(btn->pin);
+	uint8_t buttonState = GpioRead(btn->pin);
 
 	// three-state machine:
 	// - press and hold: send "r" key (for rewind function of RetroArch)

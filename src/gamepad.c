@@ -37,12 +37,12 @@ DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
 int16_t gpad_open(GPAD_ST* const gpad) {
 	gpad->state = 0;
 
-	gpio_open(gpad->pin_strobe, GPIO_OUTPUT);
-	gpio_open(gpad->pin_clock, GPIO_OUTPUT);
-	gpio_open(gpad->pin_data, GPIO_INPUT);
+    GpioOpen(gpad->pin_strobe, GPIO_OUTPUT);
+    GpioOpen(gpad->pin_clock, GPIO_OUTPUT);
+    GpioOpen(gpad->pin_data, GPIO_INPUT);
 
-	gpio_write_pin(gpad->pin_strobe, GPIO_LOW);
-	gpio_write_pin(gpad->pin_clock, GPIO_LOW);
+    GpioWrite(gpad->pin_strobe, GPIO_LOW);
+    GpioWrite(gpad->pin_clock, GPIO_LOW);
 	
 	return 0;
 }
@@ -58,9 +58,9 @@ int16_t gpad_ioctrl() {
 int16_t ReadGamepads(GPAD_ST *const gpad) {
 	int16_t i;
 
-	gpio_write_pin(gpad->pin_strobe, GPIO_HIGH);
+    GpioWrite(gpad->pin_strobe, GPIO_HIGH);
 	delayMicroseconds(2);
-	gpio_write_pin(gpad->pin_strobe, GPIO_LOW);
+    GpioWrite(gpad->pin_strobe, GPIO_LOW);
 	delayMicroseconds(2);
 
 	gpad->state = 0;
@@ -68,11 +68,8 @@ int16_t ReadGamepads(GPAD_ST *const gpad) {
 		case GAMEPAD_SNES:
 			for (i = 0; i < 16; i++) {
 
-				uint8_t curpin1 = gpio_read_pin(gpad->pin_data);
-				gpio_write_pin(gpad->pin_clock, GPIO_HIGH);
-				delayMicroseconds(2);
-				gpio_write_pin(gpad->pin_clock, GPIO_LOW);
-				delayMicroseconds(2);
+				uint8_t curpin1 = GpioRead(gpad->pin_data);
+                GpioPulse(gpad->pin_clock);
 
 				if (curpin1 == GPIO_LOW) {
 					gpad->state |= (1 << i);
@@ -87,10 +84,10 @@ int16_t ReadGamepads(GPAD_ST *const gpad) {
 	case GAMEPAD_NES:
 			for (i = 0; i < 8; i++) {
 
-				uint8_t curpin1 = gpio_read_pin(gpad->pin_data);
-				gpio_write_pin(gpad->pin_clock, GPIO_HIGH);
+				uint8_t curpin1 = GpioRead(gpad->pin_data);
+                GpioWrite(gpad->pin_clock, GPIO_HIGH);
 				delayMicroseconds(2);
-				gpio_write_pin(gpad->pin_clock, GPIO_LOW);
+                GpioWrite(gpad->pin_clock, GPIO_LOW);
 				delayMicroseconds(2);
 
 				if (curpin1 == GPIO_LOW) {
