@@ -33,8 +33,7 @@
 
 #include "btn.h"
 #include "gamepad.h"
-#include "uinput_kbd.h"
-#include "uinput_gamepad.h"
+#include "uinput.h"
 
 #include "config.h"
 #include "daemon.h"
@@ -47,8 +46,8 @@
 #define CONFIG_FILE "/etc/gpio/snesdev.cfg"
 
 bool running;
-VirtualKeyboard virtualKeyboard;
-VirtualGamepad *virtualGamepads;
+InputDevice virtualKeyboard;
+InputDevice *virtualGamepads;
 SNESDevConfig config;
 
 
@@ -56,11 +55,11 @@ void SetupSignals();
 void SignalHander(int signal);
 
 /* checks, if a button on the pad is pressed and sends an event according the button state. */
-static inline void processPadBtn(uint16_t buttons, uint16_t evtype, uint16_t mask, uint16_t key, VirtualGamepad * uinp_gpad) {
+static inline void processPadBtn(uint16_t buttons, uint16_t mask, uint16_t key, InputDevice * uinp_gpad) {
 	if ((buttons & mask) == mask) {
-		uinput_gpad_write(uinp_gpad, key, 1, evtype);
+		WriteKey(uinp_gpad, key, true);
 	} else {
-		uinput_gpad_write(uinp_gpad, key, 0, evtype);
+        WriteKey(uinp_gpad, key, false);
 	}
 }
 
@@ -113,7 +112,7 @@ int main(int argc, char *argv[]) {
                 printf("[SNESDev-Rpi] Enabling game pad %d with type '%s'.\n",
                        gamepad->Id, gamepad->Type == GPAD_TYPE_NES ? "NES" : "SNES");
                 gpad_open(&gpads[i]);
-                uinput_gpad_open(&virtualGamepads[i]);
+                OpenInputDevice(Gamepad, &virtualGamepads[i]);
             }
         }
 	}
@@ -123,7 +122,7 @@ int main(int argc, char *argv[]) {
 		button.port = 1;
         button.pin = config.ButtonGpio;
 		btn_open(&button);
-        OpenVirtualKeyboard(&virtualKeyboard);
+        OpenInputDevice(Keyboard, &virtualKeyboard);
 	}
 
     SetupSignals();
@@ -143,34 +142,34 @@ int main(int argc, char *argv[]) {
             // Read states of the buttons.
             gpad_read(&gpads[i]);
 
-            VirtualGamepad *gpad = &virtualGamepads[i];
+            InputDevice *gpad = &virtualGamepads[i];
             const uint16_t state = gpads[i].state;
 
-            processPadBtn(state, EV_KEY, GPAD_SNES_A, BTN_A, gpad);
-            processPadBtn(state, EV_KEY, GPAD_SNES_B, BTN_B, gpad);
-            processPadBtn(state, EV_KEY, GPAD_SNES_X, BTN_X, gpad);
-            processPadBtn(state, EV_KEY, GPAD_SNES_Y, BTN_Y, gpad);
-            processPadBtn(state, EV_KEY, GPAD_SNES_L, BTN_TL, gpad);
-            processPadBtn(state, EV_KEY, GPAD_SNES_R, BTN_TR, gpad);
-            processPadBtn(state, EV_KEY, GPAD_SNES_SELECT, BTN_SELECT, gpad);
-            processPadBtn(state, EV_KEY, GPAD_SNES_START, BTN_START, gpad);
+            processPadBtn(state, GPAD_SNES_A, BTN_A, gpad);
+            processPadBtn(state, GPAD_SNES_B, BTN_B, gpad);
+            processPadBtn(state, GPAD_SNES_X, BTN_X, gpad);
+            processPadBtn(state, GPAD_SNES_Y, BTN_Y, gpad);
+            processPadBtn(state, GPAD_SNES_L, BTN_TL, gpad);
+            processPadBtn(state, GPAD_SNES_R, BTN_TR, gpad);
+            processPadBtn(state, GPAD_SNES_SELECT, BTN_SELECT, gpad);
+            processPadBtn(state, GPAD_SNES_START, BTN_START, gpad);
 
             // X Axis.
             if ((state & GPAD_SNES_LEFT) == GPAD_SNES_LEFT) {
-                uinput_gpad_write(gpad, ABS_X, 0, EV_ABS);
+                WriteAxis(gpad, ABS_X, 0);
             } else if ((state & GPAD_SNES_RIGHT) == GPAD_SNES_RIGHT) {
-                uinput_gpad_write(gpad, ABS_X, 4, EV_ABS);
+                WriteAxis(gpad, ABS_X, 4);
             } else {
-                uinput_gpad_write(gpad, ABS_X, 2, EV_ABS);
+                WriteAxis(gpad, ABS_X, 2);
             }
 
             // Y Axis.
             if ((state & GPAD_SNES_UP) == GPAD_SNES_UP) {
-                uinput_gpad_write(gpad, ABS_Y, 0, EV_ABS);
+                WriteAxis(gpad, ABS_Y, 0);
             } else if ((state & GPAD_SNES_DOWN) == GPAD_SNES_DOWN) {
-                uinput_gpad_write(gpad, ABS_Y, 4, EV_ABS);
+                WriteAxis(gpad, ABS_Y, 4);
             } else {
-                uinput_gpad_write(gpad, ABS_Y, 2, EV_ABS);
+                WriteAxis(gpad, ABS_Y, 2);
             }
         }
 
@@ -181,10 +180,10 @@ int main(int argc, char *argv[]) {
 			case BTN_STATE_IDLE:
 				break;
 			case BTN_STATE_PRESSED:
-                WriteToVirtualKeyboard(&virtualKeyboard, KEY_ESC, true);
+                WriteKey(&virtualKeyboard, KEY_ESC, true);
 				break;
 			case BTN_STATE_RELEASED:
-                WriteToVirtualKeyboard(&virtualKeyboard, KEY_ESC, false);
+                WriteKey(&virtualKeyboard, KEY_ESC, false);
 				break;
 			}
 		}
@@ -209,9 +208,9 @@ void SetupSignals() {
 }
 
 void SignalHander(int signal) {
-    CloseVirtualKeyboard(&virtualKeyboard);
+    CloseInputDevice(&virtualKeyboard);
     for (uint8_t i = 0; i < config.NumberOfGamepads; i++) {
-        uinput_gpad_close(&virtualGamepads[i]);
+        CloseInputDevice(&virtualGamepads[i]);
     }
 
     running = false;

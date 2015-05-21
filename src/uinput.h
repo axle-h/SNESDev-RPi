@@ -96,11 +96,18 @@
 DECLARE_ENUM(VirtualKey, VIRTUAL_KEYS)
 
 
+typedef enum {
+    Gamepad,
+    Keyboard
+} InputDeviceType;
+
 typedef struct {
-	int16_t FileDescriptor;
-} VirtualKeyboard;
+	int16_t File;
+    char *Name;
+} InputDevice;
 
-bool OpenVirtualKeyboard(VirtualKeyboard *const keyboard);
-bool CloseVirtualKeyboard(VirtualKeyboard *const keyboard);
-bool WriteToVirtualKeyboard(VirtualKeyboard *const keyboard, unsigned short int key, bool keyPressed);
-
+bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device);
+bool CloseInputDevice(InputDevice *const device);
+bool WriteKey(InputDevice *const device, unsigned short int key, bool keyPressed);
+bool WriteAxis(InputDevice *const device, unsigned short int axis, int value);
+bool SyncEndFrame(InputDevice *const device);
