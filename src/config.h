@@ -6,9 +6,9 @@
 
 
 typedef struct {
-    uint8_t Id;
+    unsigned int Id;
     bool Enabled;
-    GPAD_TYPE Type;
+    GamepadType Type;
     uint8_t DataGpio;
 } GamepadConfig;
 
@@ -16,15 +16,15 @@ typedef struct {
     bool RunAsDaemon;
     bool DebugEnabled;
     const char *PidFile;
-    uint8_t NumberOfGamepads;
+    unsigned int NumberOfGamepads;
     GamepadConfig *Gamepads;
     uint8_t ClockGpio;
     uint8_t LatchGpio;
-    uint32_t GamepadPollFrequency;
+    unsigned int GamepadPollFrequency;
     bool ButtonEnabled;
     uint8_t ButtonGpio;
-    uint32_t ButtonPollFrequency;
+    unsigned int ButtonPollFrequency;
 } SNESDevConfig;
 
 
-bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, const int maxGamepads, SNESDevConfig *config);
+bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, const unsigned int maxGamepads, SNESDevConfig *config);

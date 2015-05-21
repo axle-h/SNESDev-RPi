@@ -34,15 +34,10 @@ typedef enum {
 } BTN_STATE_E;
 
 typedef struct {
-	int16_t port;
 	int16_t pin;
 	BTN_STATE_E state;
-	uint32_t duration;
-	uint16_t pressedCtr;
-	uint32_t lastPress;
 } BTN_DEV_ST;
 
 int16_t btn_open(BTN_DEV_ST* btn);
 void btn_read(BTN_DEV_ST* const btn);
-int16_t btn_ioctlr();
 

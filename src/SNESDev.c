@@ -46,8 +46,8 @@
 #define CONFIG_FILE "/etc/gpio/snesdev.cfg"
 
 bool running;
-InputDevice virtualKeyboard;
-InputDevice *virtualGamepads;
+InputDevice keyboardDevice;
+InputDevice *gamepadDevices;
 SNESDevConfig config;
 
 
@@ -55,7 +55,7 @@ void SetupSignals();
 void SignalHander(int signal);
 
 /* checks, if a button on the pad is pressed and sends an event according the button state. */
-static inline void processPadBtn(uint16_t buttons, uint16_t mask, uint16_t key, InputDevice * uinp_gpad) {
+static inline void processPadBtn(uint16_t buttons, uint16_t mask, unsigned short int key, InputDevice * uinp_gpad) {
 	if ((buttons & mask) == mask) {
 		WriteKey(uinp_gpad, key, true);
 	} else {
@@ -92,85 +92,85 @@ int main(int argc, char *argv[]) {
         StartDaemon(config.PidFile);
     }
 
-    GPAD_ST gpads[config.NumberOfGamepads];
+    GPAD_ST gamepads[config.NumberOfGamepads];
     BTN_DEV_ST button;
 
-    virtualGamepads = malloc(config.NumberOfGamepads * sizeof(*virtualGamepads));
+    gamepadDevices = malloc(config.NumberOfGamepads * sizeof(*gamepadDevices));
 
 	if (config.NumberOfGamepads > 0) {
 
-        for(uint8_t i = 0; i < config.NumberOfGamepads; i++) {
+        for(unsigned int i = 0; i < config.NumberOfGamepads; i++) {
             GamepadConfig *gamepad = &config.Gamepads[i];
 
-            gpads[i].port = 1;
-            gpads[i].pin_clock = config.ClockGpio;
-            gpads[i].pin_strobe = config.LatchGpio;
-            gpads[i].pin_data = gamepad->DataGpio;
-            gpads[i].type = gamepad->Type;
+            gamepads[i].pin_clock = config.ClockGpio;
+            gamepads[i].pin_strobe = config.LatchGpio;
+            gamepads[i].pin_data = gamepad->DataGpio;
+            gamepads[i].type = gamepad->Type;
 
             if(gamepad->Enabled) {
                 printf("[SNESDev-Rpi] Enabling game pad %d with type '%s'.\n",
-                       gamepad->Id, gamepad->Type == GPAD_TYPE_NES ? "NES" : "SNES");
-                gpad_open(&gpads[i]);
-                OpenInputDevice(Gamepad, &virtualGamepads[i]);
+                       gamepad->Id, GetGamepadTypeString(gamepad->Type));
+                gpad_open(&gamepads[i]);
+                OpenInputDevice(Gamepad, &gamepadDevices[i]);
             }
         }
 	}
 
 	if (config.ButtonEnabled) {
 		printf("[SNESDev-Rpi] Enabling button.\n");
-		button.port = 1;
         button.pin = config.ButtonGpio;
 		btn_open(&button);
-        OpenInputDevice(Keyboard, &virtualKeyboard);
+        OpenInputDevice(Keyboard, &keyboardDevice);
 	}
 
     SetupSignals();
 
-	uint32_t frameLength = config.NumberOfGamepads > 0 ? config.GamepadPollFrequency : config.ButtonPollFrequency;
-    uint8_t buttonFrameDelay = (uint8_t) ((frameLength + config.ButtonPollFrequency - 1) / config.ButtonPollFrequency);
-    uint8_t frameDelayCount = 0;
+	const unsigned int frameLength = config.NumberOfGamepads > 0 ? config.GamepadPollFrequency : config.ButtonPollFrequency;
+    const unsigned int buttonFrameDelay = (frameLength + config.ButtonPollFrequency - 1) / config.ButtonPollFrequency;
+    unsigned int frameDelayCount = 0;
 
 	running = true;
 	while (running) {
-        for(uint8_t i = 0; i < config.NumberOfGamepads; i++) {
-            GamepadConfig *gamepad = &config.Gamepads[i];
-            if(!gamepad->Enabled) {
+        for(unsigned int i = 0; i < config.NumberOfGamepads; i++) {
+            GamepadConfig *gamepadConfig = &config.Gamepads[i];
+            if(!gamepadConfig->Enabled) {
                 continue;
             }
 
             // Read states of the buttons.
-            gpad_read(&gpads[i]);
+            ReadGamepads(&gamepads[i]);
 
-            InputDevice *gpad = &virtualGamepads[i];
-            const uint16_t state = gpads[i].state;
+            InputDevice *gamepadDevice = &gamepadDevices[i];
+            const uint16_t state = gamepads[i].state;
 
-            processPadBtn(state, GPAD_SNES_A, BTN_A, gpad);
-            processPadBtn(state, GPAD_SNES_B, BTN_B, gpad);
-            processPadBtn(state, GPAD_SNES_X, BTN_X, gpad);
-            processPadBtn(state, GPAD_SNES_Y, BTN_Y, gpad);
-            processPadBtn(state, GPAD_SNES_L, BTN_TL, gpad);
-            processPadBtn(state, GPAD_SNES_R, BTN_TR, gpad);
-            processPadBtn(state, GPAD_SNES_SELECT, BTN_SELECT, gpad);
-            processPadBtn(state, GPAD_SNES_START, BTN_START, gpad);
+            processPadBtn(state, GPAD_SNES_A, BTN_A, gamepadDevice);
+            processPadBtn(state, GPAD_SNES_B, BTN_B, gamepadDevice);
+            processPadBtn(state, GPAD_SNES_X, BTN_X, gamepadDevice);
+            processPadBtn(state, GPAD_SNES_Y, BTN_Y, gamepadDevice);
+            processPadBtn(state, GPAD_SNES_L, BTN_TL, gamepadDevice);
+            processPadBtn(state, GPAD_SNES_R, BTN_TR, gamepadDevice);
+            processPadBtn(state, GPAD_SNES_SELECT, BTN_SELECT, gamepadDevice);
+            processPadBtn(state, GPAD_SNES_START, BTN_START, gamepadDevice);
 
             // X Axis.
             if ((state & GPAD_SNES_LEFT) == GPAD_SNES_LEFT) {
-                WriteAxis(gpad, ABS_X, 0);
+                WriteAxis(gamepadDevice, ABS_X, 0);
             } else if ((state & GPAD_SNES_RIGHT) == GPAD_SNES_RIGHT) {
-                WriteAxis(gpad, ABS_X, 4);
+                WriteAxis(gamepadDevice, ABS_X, 4);
             } else {
-                WriteAxis(gpad, ABS_X, 2);
+                WriteAxis(gamepadDevice, ABS_X, 2);
             }
 
             // Y Axis.
             if ((state & GPAD_SNES_UP) == GPAD_SNES_UP) {
-                WriteAxis(gpad, ABS_Y, 0);
+                WriteAxis(gamepadDevice, ABS_Y, 0);
             } else if ((state & GPAD_SNES_DOWN) == GPAD_SNES_DOWN) {
-                WriteAxis(gpad, ABS_Y, 4);
+                WriteAxis(gamepadDevice, ABS_Y, 4);
             } else {
-                WriteAxis(gpad, ABS_Y, 2);
+                WriteAxis(gamepadDevice, ABS_Y, 2);
             }
+
+            WriteSync(gamepadDevice);
         }
 
 		if (config.ButtonEnabled && frameDelayCount == 0) {
@@ -180,15 +180,17 @@ int main(int argc, char *argv[]) {
 			case BTN_STATE_IDLE:
 				break;
 			case BTN_STATE_PRESSED:
-                WriteKey(&virtualKeyboard, KEY_ESC, true);
+                WriteKey(&keyboardDevice, KEY_ESC, true);
+                WriteSync(&keyboardDevice);
 				break;
 			case BTN_STATE_RELEASED:
-                WriteKey(&virtualKeyboard, KEY_ESC, false);
+                WriteKey(&keyboardDevice, KEY_ESC, false);
+                WriteSync(&keyboardDevice);
 				break;
 			}
 		}
-
-        frameDelayCount = ++frameDelayCount % buttonFrameDelay;
+        frameDelayCount++;
+        frameDelayCount %= buttonFrameDelay;
         bcm2835_delay(frameLength);
 	}
 
@@ -208,9 +210,10 @@ void SetupSignals() {
 }
 
 void SignalHander(int signal) {
-    CloseInputDevice(&virtualKeyboard);
-    for (uint8_t i = 0; i < config.NumberOfGamepads; i++) {
-        CloseInputDevice(&virtualGamepads[i]);
+    CloseInputDevice(&keyboardDevice);
+
+    for (unsigned int i = 0; i < config.NumberOfGamepads; i++) {
+        CloseInputDevice(&gamepadDevices[i]);
     }
 
     running = false;

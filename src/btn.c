@@ -25,24 +25,17 @@
  * Raspberry Pi is a trademark of the Raspberry Pi Foundation.
  */
  
-#include <stdio.h>
-#include <string.h> 
-#include <time.h>
-
 #include "btn.h"
 #include "GPIO.h"
 
 int16_t btn_open(BTN_DEV_ST * btn) {
-	btn->duration = 0;
-	btn->lastPress = 0;
-	btn->pressedCtr = 0;
 	btn->state = BTN_STATE_IDLE;
-	return gpio_open(btn->port, btn->pin, GPIO_INPUT);
+	return gpio_open(btn->pin, GPIO_INPUT);
 }
 
 void btn_read(BTN_DEV_ST* const btn) {
 	// read the state of the button into a local variable
-	uint8_t buttonState = gpio_read_pin(btn->port, btn->pin);
+	uint8_t buttonState = gpio_read_pin(btn->pin);
 
 	// three-state machine:
 	// - press and hold: send "r" key (for rewind function of RetroArch)
@@ -50,39 +43,21 @@ void btn_read(BTN_DEV_ST* const btn) {
 	// - press and release five times: shutdown
 	switch (btn->state) {
 	case BTN_STATE_IDLE:
-		if (buttonState == GPIO_LOW) {
-			btn->duration = difftime(time(NULL ), btn->lastPress);
-		} else if (buttonState == GPIO_HIGH) {
-			btn->lastPress = time(NULL );
+		if (buttonState == GPIO_HIGH) {
 			btn->state = BTN_STATE_PRESSED;
-			btn->pressedCtr += 1;
 		}
 		break;
 	case BTN_STATE_PRESSED:
 		if (buttonState == GPIO_LOW) {
-			btn->lastPress = time(NULL );
 			btn->state = BTN_STATE_RELEASED;
-		} else if (buttonState == GPIO_HIGH) {
-			btn->duration = difftime(time(NULL ), btn->lastPress);
 		}
 		break;
 	case BTN_STATE_RELEASED:
 		if (buttonState == GPIO_LOW) {
-			btn->duration = difftime(time(NULL ), btn->lastPress);
-			if (btn->duration >=2) {
-				btn->lastPress = time(NULL );
-				btn->state = BTN_STATE_IDLE;
-				btn->pressedCtr = 0;
-			}
+			btn->state = BTN_STATE_IDLE;
 		} else if (buttonState == GPIO_HIGH) {
-			btn->lastPress = time(NULL );
 			btn->state = BTN_STATE_PRESSED;
-			btn->pressedCtr += 1;
 		}
 		break;
 	}
-}
-
-int16_t btn_ioctlr() {
-	return -1;
 }

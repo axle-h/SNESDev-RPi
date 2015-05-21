@@ -32,15 +32,17 @@
 #include "gamepad.h"
 #include "GPIO.h"
 
+DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
+
 int16_t gpad_open(GPAD_ST* const gpad) {
 	gpad->state = 0;
 
-	gpio_open(gpad->port, gpad->pin_strobe, GPIO_OUTPUT);
-	gpio_open(gpad->port, gpad->pin_clock, GPIO_OUTPUT);
-	gpio_open(gpad->port, gpad->pin_data, GPIO_INPUT);
+	gpio_open(gpad->pin_strobe, GPIO_OUTPUT);
+	gpio_open(gpad->pin_clock, GPIO_OUTPUT);
+	gpio_open(gpad->pin_data, GPIO_INPUT);
 
-	gpio_write_pin(gpad->port, gpad->pin_strobe, GPIO_LOW);
-	gpio_write_pin(gpad->port, gpad->pin_clock, GPIO_LOW);
+	gpio_write_pin(gpad->pin_strobe, GPIO_LOW);
+	gpio_write_pin(gpad->pin_clock, GPIO_LOW);
 	
 	return 0;
 }
@@ -53,23 +55,23 @@ int16_t gpad_ioctrl() {
 	return -1;
 }
 
-int16_t gpad_read(GPAD_ST* const gpad) {
+int16_t ReadGamepads(GPAD_ST *const gpad) {
 	int16_t i;
 
-	gpio_write_pin(gpad->port, gpad->pin_strobe, GPIO_HIGH);
+	gpio_write_pin(gpad->pin_strobe, GPIO_HIGH);
 	delayMicroseconds(2);
-	gpio_write_pin(gpad->port, gpad->pin_strobe, GPIO_LOW);
+	gpio_write_pin(gpad->pin_strobe, GPIO_LOW);
 	delayMicroseconds(2);
 
 	gpad->state = 0;
 	switch (gpad->type) {
-		case GPAD_TYPE_SNES:
+		case GAMEPAD_SNES:
 			for (i = 0; i < 16; i++) {
 
-				uint8_t curpin1 = gpio_read_pin(gpad->port, gpad->pin_data);
-				gpio_write_pin(gpad->port, gpad->pin_clock, GPIO_HIGH);
+				uint8_t curpin1 = gpio_read_pin(gpad->pin_data);
+				gpio_write_pin(gpad->pin_clock, GPIO_HIGH);
 				delayMicroseconds(2);
-				gpio_write_pin(gpad->port, gpad->pin_clock, GPIO_LOW);
+				gpio_write_pin(gpad->pin_clock, GPIO_LOW);
 				delayMicroseconds(2);
 
 				if (curpin1 == GPIO_LOW) {
@@ -82,13 +84,13 @@ int16_t gpad_read(GPAD_ST* const gpad) {
 				gpad->state = 0;
 			}
 		break;
-	case GPAD_TYPE_NES:
+	case GAMEPAD_NES:
 			for (i = 0; i < 8; i++) {
 
-				uint8_t curpin1 = gpio_read_pin(gpad->port, gpad->pin_data);
-				gpio_write_pin(gpad->port, gpad->pin_clock, GPIO_HIGH);
+				uint8_t curpin1 = gpio_read_pin(gpad->pin_data);
+				gpio_write_pin(gpad->pin_clock, GPIO_HIGH);
 				delayMicroseconds(2);
-				gpio_write_pin(gpad->port, gpad->pin_clock, GPIO_LOW);
+				gpio_write_pin(gpad->pin_clock, GPIO_LOW);
 				delayMicroseconds(2);
 
 				if (curpin1 == GPIO_LOW) {

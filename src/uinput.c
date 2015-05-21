@@ -37,7 +37,7 @@
 
 #define UINPUT_DEVICE "/dev/uinput"
 
-DEFINE_ENUM(VirtualKey, VIRTUAL_KEYS, size_t)
+DEFINE_ENUM(VirtualKey, ENUM_VIRTUAL_KEYS, size_t)
 
 bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device)
 {
@@ -80,7 +80,7 @@ bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device
             userInput.absmax[ABS_Y] = 4;
             break;
         case Keyboard:
-            for (int i = 0; i < TotalVirtualKeys; i++) {
+            for (unsigned int i = 0; i < TotalVirtualKeys; i++) {
                 ioctl(device->File, UI_SET_KEYBIT, VirtualKeyValues[i]);
             }
             break;
@@ -138,7 +138,7 @@ bool WriteKey(InputDevice *const device, unsigned short int key, bool keyPressed
     return true;
 }
 
-bool SyncEndFrame(InputDevice *const device) {
+bool WriteSync(InputDevice *const device) {
     struct input_event event;
     memset(&event, 0, sizeof(event));
 

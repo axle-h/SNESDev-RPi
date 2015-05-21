@@ -1,26 +1,26 @@
 // expansion macro for enum name definition
-#define ENUM_NAME(name,assign) name,
+#define ENUM_NAME(name, assign, prettyName) name,
 
 // expansion macro for enum value definition
-#define ENUM_VALUE(name,assign) name assign,
+#define ENUM_VALUE(name, assign, prettyName) name assign,
 
 // expansion macro for enum to string conversion
-#define ENUM_CASE(name,assign) case name: return #name;
+#define ENUM_CASE(name, assign, prettyName) case name: return #prettyName;
 
 // expansion macro for string to enum conversion
-#define ENUM_STRCMP(name,assign) if (!strcmp(str,#name)) return name;
+#define ENUM_STRCMP(name, assign, prettyName) if (!strcmp(str,#prettyName)) return name;
 
 /// declare the access function and define enum values
 #define DECLARE_ENUM(EnumType,ENUM_DEF) \
   typedef enum { \
     ENUM_DEF(ENUM_VALUE) \
   } EnumType; \
-  const char *GetString(EnumType dummy); \
+  const char *Get ## EnumType ## String(EnumType dummy); \
   EnumType Get ## EnumType ## Value(const char *string);
 
 /// define the access function names
 #define DEFINE_ENUM(EnumType,ENUM_DEF,enumType) \
-  const char *GetString(EnumType value) \
+  const char *Get ## EnumType ## String(EnumType value) \
   { \
     switch(value) \
     { \

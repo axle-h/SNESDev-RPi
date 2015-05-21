@@ -28,6 +28,8 @@
 #pragma once
 
 /* bit masks for checking the button states for SNES controllers */
+#include "enum.h"
+
 #define GPAD_SNES_B       0x01
 #define GPAD_SNES_Y       0x02
 #define GPAD_SNES_SELECT  0x04
@@ -41,25 +43,15 @@
 #define GPAD_SNES_L       0x400
 #define GPAD_SNES_R       0x800
 
-/* bit masks for checking the button states for NES controllers */
-#define GPAD_NES_B       0x01
-#define GPAD_NES_SELECT  0x04
-#define GPAD_NES_START   0x08
-#define GPAD_NES_UP      0x10
-#define GPAD_NES_DOWN    0x20
-#define GPAD_NES_LEFT    0x40
-#define GPAD_NES_RIGHT   0x80
-#define GPAD_NES_A       0x100
+#define ENUM_GAMEPAD_TYPE(XX) \
+    XX(GAMEPAD_NES, =1, nes) \
+    XX(GAMEPAD_SNES, =2, snes)
 
-typedef enum {
-	GPAD_TYPE_NES = 0,
-	GPAD_TYPE_SNES = 1
-} GPAD_TYPE;
+DECLARE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE)
 
 /* holds the GPIO pins for the clock, strobe and data signals */
 typedef struct {
-	GPAD_TYPE type;
-	int16_t port;
+    GamepadType type;
 	int16_t pin_clock;
 	int16_t pin_strobe;
 	int16_t pin_data;
@@ -69,5 +61,5 @@ typedef struct {
 int16_t gpad_open(GPAD_ST* const gpad);
 int16_t gpad_close();
 int16_t gpad_ioctrl();
-int16_t gpad_read(GPAD_ST* const gpad);
+int16_t ReadGamepads(GPAD_ST *const gpad);
 

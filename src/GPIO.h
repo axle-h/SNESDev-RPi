@@ -28,11 +28,6 @@
 #pragma once
 
 typedef enum {
-	GPIO_SETDIR = 0,
-	GPIO_TOOGLE = 1
-} GPIO_IOCTRL_CMD;
-
-typedef enum {
 	GPIO_OUTPUT = 0,
 	GPIO_INPUT  = 1
 } GPIO_DIR;
@@ -42,7 +37,7 @@ typedef enum {
 	GPIO_HIGH = 1
 } GPIO_VALUE;
 
-int16_t          gpio_open       (int16_t port, int16_t pin, GPIO_DIR direction);
-uint8_t          gpio_read_pin   (int16_t port, int16_t pin);
-int16_t          gpio_write_pin  (int16_t port, int16_t pin, GPIO_VALUE val);
+int16_t          gpio_open       (int16_t pin, GPIO_DIR direction);
+uint8_t          gpio_read_pin   (int16_t pin);
+int16_t          gpio_write_pin  (int16_t pin, GPIO_VALUE val);
 
