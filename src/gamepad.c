@@ -25,48 +25,36 @@
  * Raspberry Pi is a trademark of the Raspberry Pi Foundation.
  */
  
-#include <bcm2835.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "gamepad.h"
 #include "GPIO.h"
 
 DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
 
-int16_t gpad_open(GPAD_ST* const gpad) {
-	gpad->state = 0;
+bool OpenGamepad(GPAD_ST *const gamepad) {
+	gamepad->state = 0;
 
-    GpioOpen(gpad->pin_strobe, GPIO_OUTPUT);
-    GpioOpen(gpad->pin_clock, GPIO_OUTPUT);
-    GpioOpen(gpad->pin_data, GPIO_INPUT);
+    bool success = false;
+    success |= GpioOpen(gamepad->pin_strobe, GPIO_OUTPUT);
+    success |= GpioOpen(gamepad->pin_clock, GPIO_OUTPUT);
+    success |= GpioOpen(gamepad->pin_data, GPIO_INPUT);
 
-    GpioWrite(gpad->pin_strobe, GPIO_LOW);
-    GpioWrite(gpad->pin_clock, GPIO_LOW);
+    GpioWrite(gamepad->pin_strobe, GPIO_LOW);
+    GpioWrite(gamepad->pin_clock, GPIO_LOW);
 	
-	return 0;
+	return success;
 }
 
-int16_t gpad_close() {
-	return -1;
-}
-
-int16_t gpad_ioctrl() {
-	return -1;
-}
-
-int16_t ReadGamepads(GPAD_ST *const gpad) {
-	int16_t i;
-
-    GpioWrite(gpad->pin_strobe, GPIO_HIGH);
-	delayMicroseconds(2);
-    GpioWrite(gpad->pin_strobe, GPIO_LOW);
-	delayMicroseconds(2);
+void ReadGamepads(GPAD_ST *const gpad) {
+	GpioPulse(gpad->pin_strobe);
 
 	gpad->state = 0;
 	switch (gpad->type) {
 		case GAMEPAD_SNES:
-			for (i = 0; i < 16; i++) {
+			for (unsigned int i = 0; i < 16; i++) {
 
 				uint8_t curpin1 = GpioRead(gpad->pin_data);
                 GpioPulse(gpad->pin_clock);
@@ -82,13 +70,10 @@ int16_t ReadGamepads(GPAD_ST *const gpad) {
 			}
 		break;
 	case GAMEPAD_NES:
-			for (i = 0; i < 8; i++) {
+			for (unsigned int i = 0; i < 8; i++) {
 
 				uint8_t curpin1 = GpioRead(gpad->pin_data);
-                GpioWrite(gpad->pin_clock, GPIO_HIGH);
-				delayMicroseconds(2);
-                GpioWrite(gpad->pin_clock, GPIO_LOW);
-				delayMicroseconds(2);
+                GpioPulse(gpad->pin_clock);
 
 				if (curpin1 == GPIO_LOW) {
 					gpad->state |= (1 << i);
@@ -103,6 +88,6 @@ int16_t ReadGamepads(GPAD_ST *const gpad) {
 	default:
 		break;
 	}
-	return gpad->state;
+
 }
 

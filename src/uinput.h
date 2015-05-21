@@ -32,74 +32,74 @@
 #include <linux/input.h>
 #include "enum.h"
 
-#define ENUM_VIRTUAL_KEYS(XX) \
-    XX(VIRTUAL_KEY_1, =2, 1) \
-    XX(VIRTUAL_KEY_2, =3, 2) \
-    XX(VIRTUAL_KEY_3, =4, 3) \
-    XX(VIRTUAL_KEY_4, =5, 4) \
-    XX(VIRTUAL_KEY_5, =6, 5) \
-    XX(VIRTUAL_KEY_6, =7, 6) \
-    XX(VIRTUAL_KEY_7, =8, 7) \
-    XX(VIRTUAL_KEY_8, =9, 8) \
-    XX(VIRTUAL_KEY_9, =10, 9) \
-    XX(VIRTUAL_KEY_0, =11, 0) \
-    XX(VIRTUAL_KEY_MINUS, =12, MINUS) \
-    XX(VIRTUAL_KEY_EQUAL, =13, EQUAL) \
-    XX(VIRTUAL_KEY_Q, =16, Q) \
-    XX(VIRTUAL_KEY_W, =17, W) \
-    XX(VIRTUAL_KEY_E, =18, E) \
-    XX(VIRTUAL_KEY_R, =19, R) \
-    XX(VIRTUAL_KEY_T, =20, T) \
-    XX(VIRTUAL_KEY_Y, =21, Y) \
-    XX(VIRTUAL_KEY_U, =22, U) \
-    XX(VIRTUAL_KEY_I, =23, I) \
-    XX(VIRTUAL_KEY_O, =24, O) \
-    XX(VIRTUAL_KEY_P, =25, P) \
-    XX(VIRTUAL_KEY_A, =30, A) \
-    XX(VIRTUAL_KEY_S, =31, S) \
-    XX(VIRTUAL_KEY_D, =32, D) \
-    XX(VIRTUAL_KEY_F, =33, F) \
-    XX(VIRTUAL_KEY_G, =34, G) \
-    XX(VIRTUAL_KEY_H, =35, H) \
-    XX(VIRTUAL_KEY_J, =36, J) \
-    XX(VIRTUAL_KEY_K, =37, K) \
-    XX(VIRTUAL_KEY_L, =38, L) \
-    XX(VIRTUAL_KEY_SEMICOLON, =39, SEMICOLON) \
-    XX(VIRTUAL_KEY_APOSTROPHE, =40, APOSTROPHE) \
-    XX(VIRTUAL_KEY_Z, =44, Z) \
-    XX(VIRTUAL_KEY_X, =45, X) \
-    XX(VIRTUAL_KEY_C, =46, C) \
-    XX(VIRTUAL_KEY_V, =47, V) \
-    XX(VIRTUAL_KEY_B, =48, B) \
-    XX(VIRTUAL_KEY_N, =49, N) \
-    XX(VIRTUAL_KEY_M, =50, M) \
-    XX(VIRTUAL_KEY_COMMA, =51, COMMA) \
-    XX(VIRTUAL_KEY_DOT, =52, DOT) \
-    XX(VIRTUAL_KEY_SLASH, =53, SLASH) \
-    XX(VIRTUAL_KEY_SPACE, =57, SPACE) \
-    XX(VIRTUAL_KEY_ESC, =1, ESC) \
-    XX(VIRTUAL_KEY_BACKSPACE, =14, BACKSPACE) \
-    XX(VIRTUAL_KEY_ENTER, =28, ENTER) \
-    XX(VIRTUAL_KEY_F1, =59, F1) \
-    XX(VIRTUAL_KEY_F2, =60, F2) \
-    XX(VIRTUAL_KEY_F3, =61, F3) \
-    XX(VIRTUAL_KEY_F4, =62, F4) \
-    XX(VIRTUAL_KEY_F5, =63, F5) \
-    XX(VIRTUAL_KEY_F6, =64, F6) \
-    XX(VIRTUAL_KEY_F7, =65, F7) \
-    XX(VIRTUAL_KEY_F8, =66, F8) \
-    XX(VIRTUAL_KEY_F9, =67, F9) \
-    XX(VIRTUAL_KEY_F10, =68, F10) \
-    XX(VIRTUAL_KEY_F11, =87, F11) \
-    XX(VIRTUAL_KEY_F12, =88, F12)
+#define ENUM_INPUT_KEYS(XX) \
+    XX(INPUT_KEY_1, =2, 1) \
+    XX(INPUT_KEY_2, =3, 2) \
+    XX(INPUT_KEY_3, =4, 3) \
+    XX(INPUT_KEY_4, =5, 4) \
+    XX(INPUT_KEY_5, =6, 5) \
+    XX(INPUT_KEY_6, =7, 6) \
+    XX(INPUT_KEY_7, =8, 7) \
+    XX(INPUT_KEY_8, =9, 8) \
+    XX(INPUT_KEY_9, =10, 9) \
+    XX(INPUT_KEY_0, =11, 0) \
+    XX(INPUT_KEY_MINUS, =12, MINUS) \
+    XX(INPUT_KEY_EQUAL, =13, EQUAL) \
+    XX(INPUT_KEY_Q, =16, Q) \
+    XX(INPUT_KEY_W, =17, W) \
+    XX(INPUT_KEY_E, =18, E) \
+    XX(INPUT_KEY_R, =19, R) \
+    XX(INPUT_KEY_T, =20, T) \
+    XX(INPUT_KEY_Y, =21, Y) \
+    XX(INPUT_KEY_U, =22, U) \
+    XX(INPUT_KEY_I, =23, I) \
+    XX(INPUT_KEY_O, =24, O) \
+    XX(INPUT_KEY_P, =25, P) \
+    XX(INPUT_KEY_A, =30, A) \
+    XX(INPUT_KEY_S, =31, S) \
+    XX(INPUT_KEY_D, =32, D) \
+    XX(INPUT_KEY_F, =33, F) \
+    XX(INPUT_KEY_G, =34, G) \
+    XX(INPUT_KEY_H, =35, H) \
+    XX(INPUT_KEY_J, =36, J) \
+    XX(INPUT_KEY_K, =37, K) \
+    XX(INPUT_KEY_L, =38, L) \
+    XX(INPUT_KEY_SEMICOLON, =39, SEMICOLON) \
+    XX(INPUT_KEY_APOSTROPHE, =40, APOSTROPHE) \
+    XX(INPUT_KEY_Z, =44, Z) \
+    XX(INPUT_KEY_X, =45, X) \
+    XX(INPUT_KEY_C, =46, C) \
+    XX(INPUT_KEY_V, =47, V) \
+    XX(INPUT_KEY_B, =48, B) \
+    XX(INPUT_KEY_N, =49, N) \
+    XX(INPUT_KEY_M, =50, M) \
+    XX(INPUT_KEY_COMMA, =51, COMMA) \
+    XX(INPUT_KEY_DOT, =52, DOT) \
+    XX(INPUT_KEY_SLASH, =53, SLASH) \
+    XX(INPUT_KEY_SPACE, =57, SPACE) \
+    XX(INPUT_KEY_ESC, =1, ESC) \
+    XX(INPUT_KEY_BACKSPACE, =14, BACKSPACE) \
+    XX(INPUT_KEY_ENTER, =28, ENTER) \
+    XX(INPUT_KEY_F1, =59, F1) \
+    XX(INPUT_KEY_F2, =60, F2) \
+    XX(INPUT_KEY_F3, =61, F3) \
+    XX(INPUT_KEY_F4, =62, F4) \
+    XX(INPUT_KEY_F5, =63, F5) \
+    XX(INPUT_KEY_F6, =64, F6) \
+    XX(INPUT_KEY_F7, =65, F7) \
+    XX(INPUT_KEY_F8, =66, F8) \
+    XX(INPUT_KEY_F9, =67, F9) \
+    XX(INPUT_KEY_F10, =68, F10) \
+    XX(INPUT_KEY_F11, =87, F11) \
+    XX(INPUT_KEY_F12, =88, F12)
 
 
-DECLARE_ENUM(VirtualKey, ENUM_VIRTUAL_KEYS)
+DECLARE_ENUM(InputKey, ENUM_INPUT_KEYS)
 
 
 typedef enum {
-    Gamepad,
-    Keyboard
+    INPUT_GAMEPAD,
+    INPUT_KEYBOARD
 } InputDeviceType;
 
 typedef struct {

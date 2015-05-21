@@ -37,7 +37,7 @@
 
 #define UINPUT_DEVICE "/dev/uinput"
 
-DEFINE_ENUM(VirtualKey, ENUM_VIRTUAL_KEYS, size_t)
+DEFINE_ENUM(InputKey, ENUM_INPUT_KEYS, unsigned int)
 
 bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device)
 {
@@ -60,7 +60,7 @@ bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device
 	ioctl(device->File, UI_SET_EVBIT, EV_REL);
 
     switch (deviceType) {
-        case Gamepad:
+        case INPUT_GAMEPAD:
             // Buttons.
             ioctl(device->File, UI_SET_KEYBIT, BTN_A);
             ioctl(device->File, UI_SET_KEYBIT, BTN_B);
@@ -79,9 +79,9 @@ bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device
             userInput.absmin[ABS_Y] = 0;
             userInput.absmax[ABS_Y] = 4;
             break;
-        case Keyboard:
-            for (unsigned int i = 0; i < TotalVirtualKeys; i++) {
-                ioctl(device->File, UI_SET_KEYBIT, VirtualKeyValues[i]);
+        case INPUT_KEYBOARD:
+            for (unsigned int i = 0; i < TotalInputKeys; i++) {
+                ioctl(device->File, UI_SET_KEYBIT, InputKeyValues[i]);
             }
             break;
     }
@@ -92,7 +92,7 @@ bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device
 		return false;
 	}
 
-    if(deviceType == Gamepad){
+    if(deviceType == INPUT_GAMEPAD){
         WriteAxis(device, ABS_X, 2);
         WriteAxis(device, ABS_Y, 2);
     }

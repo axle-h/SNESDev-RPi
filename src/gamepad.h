@@ -27,8 +27,10 @@
 
 #pragma once
 
-/* bit masks for checking the button states for SNES controllers */
+#include <stdbool.h>
 #include "enum.h"
+
+/* bit masks for checking the button states for SNES controllers */
 
 #define GPAD_SNES_B       0x01
 #define GPAD_SNES_Y       0x02
@@ -58,8 +60,6 @@ typedef struct {
 	uint16_t state;
 } GPAD_ST;
 
-int16_t gpad_open(GPAD_ST* const gpad);
-int16_t gpad_close();
-int16_t gpad_ioctrl();
-int16_t ReadGamepads(GPAD_ST *const gpad);
+bool OpenGamepad(GPAD_ST *const gamepad);
+void ReadGamepads(GPAD_ST *const gpad);
 

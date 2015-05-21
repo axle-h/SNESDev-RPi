@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <bcm2835.h>
 #include <signal.h>
+#include <string.h>
 
 #include "btn.h"
 #include "gamepad.h"
@@ -41,7 +42,9 @@
 #define true_str "true"
 #define false_str "false"
 
-#define MAX_GAMEPADS 2 /* number of game pads to poll */
+#define MAX_GAMEPADS 2
+#define KEYBOARD_DEVICE_NAME "SNESDev Keyboard"
+#define GAMEPAD_DEVICE_NAME "SNESDev Gamepad"
 
 #define CONFIG_FILE "/etc/gpio/snesdev.cfg"
 
@@ -76,7 +79,7 @@ int main(int argc, char *argv[]) {
 
     for(unsigned int i=0; i < config.NumberOfGamepads; i++) {
         GamepadConfig *gamepad = &config.Gamepads[i];
-        printf("Gamepad %u, Enabled: %s, Type: %d, Gpio: %u\n", gamepad->Id, gamepad->Enabled ? true_str : false_str, gamepad->Type, gamepad->DataGpio);
+        printf("INPUT_GAMEPAD %u, Enabled: %s, Type: %d, Gpio: %u\n", gamepad->Id, gamepad->Enabled ? true_str : false_str, gamepad->Type, gamepad->DataGpio);
     }
 
     printf("ButtonEnabled: %s, ButtonGpio: %u, ButtonPollFrequency: %u\n",
@@ -92,6 +95,7 @@ int main(int argc, char *argv[]) {
         StartDaemon(config.PidFile);
     }
 
+    keyboardDevice.Name = KEYBOARD_DEVICE_NAME;
     GPAD_ST gamepads[config.NumberOfGamepads];
     BTN_DEV_ST button;
 
@@ -101,6 +105,11 @@ int main(int argc, char *argv[]) {
 
         for(unsigned int i = 0; i < config.NumberOfGamepads; i++) {
             GamepadConfig *gamepad = &config.Gamepads[i];
+            InputDevice *gamepadDevice = &gamepadDevices[i];
+
+            char buffer[80];
+            sprintf(buffer, "%s %u", GAMEPAD_DEVICE_NAME, gamepad->Id);
+            strcpy(gamepadDevice->Name, buffer);
 
             gamepads[i].pin_clock = config.ClockGpio;
             gamepads[i].pin_strobe = config.LatchGpio;
@@ -110,8 +119,8 @@ int main(int argc, char *argv[]) {
             if(gamepad->Enabled) {
                 printf("[SNESDev-Rpi] Enabling game pad %d with type '%s'.\n",
                        gamepad->Id, GetGamepadTypeString(gamepad->Type));
-                gpad_open(&gamepads[i]);
-                OpenInputDevice(Gamepad, &gamepadDevices[i]);
+                OpenGamepad(&gamepads[i]);
+                OpenInputDevice(INPUT_GAMEPAD, gamepadDevice);
             }
         }
 	}
@@ -120,7 +129,7 @@ int main(int argc, char *argv[]) {
 		printf("[SNESDev-Rpi] Enabling button.\n");
         button.pin = config.ButtonGpio;
 		btn_open(&button);
-        OpenInputDevice(Keyboard, &keyboardDevice);
+        OpenInputDevice(INPUT_KEYBOARD, &keyboardDevice);
 	}
 
     SetupSignals();
