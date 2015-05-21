@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
 	bcm2835_set_debug((uint8_t) config.DebugEnabled);
 
 	if (!bcm2835_init()) {
-		return 1;
+		return EXIT_FAILURE;
 	}
 
     if(config.RunAsDaemon) {
@@ -107,9 +107,9 @@ int main(int argc, char *argv[]) {
             GamepadConfig *gamepad = &config.Gamepads[i];
             InputDevice *gamepadDevice = &gamepadDevices[i];
 
-            char buffer[80];
+            char buffer[strlen(GAMEPAD_DEVICE_NAME) + 3];
             sprintf(buffer, "%s %u", GAMEPAD_DEVICE_NAME, gamepad->Id);
-            strcpy(gamepadDevice->Name, buffer);
+            gamepadDevice->Name = strdup(buffer);
 
             gamepads[i].pin_clock = config.ClockGpio;
             gamepads[i].pin_strobe = config.LatchGpio;

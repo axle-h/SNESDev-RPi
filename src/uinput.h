@@ -104,7 +104,7 @@ typedef enum {
 
 typedef struct {
 	int File;
-    char *Name;
+    const char *Name;
 } InputDevice;
 
 bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device);
