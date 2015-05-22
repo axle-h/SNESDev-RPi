@@ -64,6 +64,7 @@ static inline void ProcessGamepadButton(InputDevice *gamepad, uint16_t state, ui
 int main(int argc, char *argv[]) {
     SNESDevConfig config;
     if(!TryGetSNESDevConfig(CONFIG_FILE, argc, argv, MAX_GAMEPADS, &config)) {
+
         return EXIT_FAILURE;
     }
 

@@ -86,6 +86,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, cons
     cfg = cfg_init(opts, CFGF_NOCASE);
 
     if (access(fileName, F_OK) == -1 || cfg_parse(cfg, fileName) != CFG_SUCCESS) {
+        fprintf(stderr, "Cannot read config file %s\n", fileName);
         return false;
     }
 
