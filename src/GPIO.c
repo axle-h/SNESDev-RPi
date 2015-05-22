@@ -35,36 +35,29 @@ bool GpioOpen(uint8_t pin, GpioDirection direction)
 	switch (direction){
 		case GPIO_OUTPUT:
 			bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_OUTP);
+            bcm2835_gpio_write(pin, LOW);
 			return true;
 		case GPIO_INPUT:
+			// Output needs a pull down for when controller not connected.
 			bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
+			bcm2835_gpio_set_pud(pin, BCM2835_GPIO_PUD_DOWN);
 			return true;
 	}
 
 	return false;
 }
 
-GpioLevel GpioRead(uint8_t pin)
-{
-	return bcm2835_gpio_lev(pin) == HIGH ? GPIO_HIGH : GPIO_LOW;
+GpioLevel GpioRead(uint8_t pin) {
+	return (GpioLevel)bcm2835_gpio_lev(pin);
 }
 
 void GpioWrite(uint8_t pin, GpioLevel val) {
-
-	switch (val) {
-		case GPIO_LOW:
-			bcm2835_gpio_write(pin, HIGH);
-			break;
-		case GPIO_HIGH:
-			bcm2835_gpio_write(pin, LOW);
-            break;
-	}
-	return;
+    bcm2835_gpio_write(pin, val);
 }
 
 void GpioPulse(uint8_t pin) {
     bcm2835_gpio_write(pin, HIGH);
-    delayMicroseconds(2);
+	bcm2835_delayMicroseconds(2);
     bcm2835_gpio_write(pin, LOW);
-    delayMicroseconds(2);
+	bcm2835_delayMicroseconds(2);
 }

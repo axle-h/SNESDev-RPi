@@ -30,26 +30,27 @@
 #include <stdbool.h>
 #include "enum.h"
 
-/* bit masks for checking the button states for SNES controllers */
 
-#define GPAD_SNES_B       0x0001
-#define GPAD_SNES_Y       0x0002
-#define GPAD_SNES_SELECT  0x0004
-#define GPAD_SNES_START   0x0008
-#define GPAD_SNES_UP      0x0010
-#define GPAD_SNES_DOWN    0x0020
-#define GPAD_SNES_LEFT    0x0040
-#define GPAD_SNES_RIGHT   0x0080
-#define GPAD_SNES_A       0x0100
-#define GPAD_SNES_X       0x0200
-#define GPAD_SNES_L       0x0400
-#define GPAD_SNES_R       0x0800
+#define ENUM_GAMEPAD_BUTTON(XX) \
+    XX(GAMEPAD_BUTTON_B, =0x0001, B) \
+    XX(GAMEPAD_BUTTON_Y, =0x0002, Y) \
+    XX(GAMEPAD_BUTTON_SELECT, =0x0004, SELECT) \
+    XX(GAMEPAD_BUTTON_START, =0x0008, START) \
+    XX(GAMEPAD_BUTTON_UP, =0x0010, UP) \
+    XX(GAMEPAD_BUTTON_DOWN, =0x0020, DOWN) \
+    XX(GAMEPAD_BUTTON_LEFT, =0x0040, LEFT) \
+    XX(GAMEPAD_BUTTON_RIGHT, =0x0080, RIGHT) \
+    XX(GAMEPAD_BUTTON_A, =0x0100, A) \
+    XX(GAMEPAD_BUTTON_X, =0x0200, X) \
+    XX(GAMEPAD_BUTTON_L, =0x0400, L) \
+    XX(GAMEPAD_BUTTON_R, =0x0800, R) \
 
 #define ENUM_GAMEPAD_TYPE(XX) \
     XX(GAMEPAD_NES, =1, nes) \
     XX(GAMEPAD_SNES, =2, snes)
 
 DECLARE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE)
+DECLARE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON)
 
 typedef struct {
 	uint8_t DataGpio;

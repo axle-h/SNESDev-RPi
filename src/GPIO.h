@@ -35,8 +35,8 @@ typedef enum {
 } GpioDirection;
 
 typedef enum {
-	GPIO_LOW  = 0,
-	GPIO_HIGH = 1
+	GPIO_LOW  = 0x0,
+	GPIO_HIGH = 0x1
 } GpioLevel;
 
 bool GpioOpen(uint8_t pin, GpioDirection direction);

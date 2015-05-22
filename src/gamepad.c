@@ -36,14 +36,13 @@
 #define NES_CLOCK 8
 
 // It's impossible to press up and down at the same time
-#define NOT_CONNECTED_MASK (GPAD_SNES_UP | GPAD_SNES_DOWN)
+#define NOT_CONNECTED_MASK (GAMEPAD_BUTTON_UP | GAMEPAD_BUTTON_DOWN)
 
 DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
+DEFINE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON, unsigned int)
 
 bool OpenGamepadControlPins(GamepadControlPins *const config) {
     bool success = GpioOpen(config->LatchGpio, GPIO_OUTPUT) && GpioOpen(config->ClockGpio, GPIO_OUTPUT);
-    GpioWrite(config->LatchGpio, GPIO_LOW);
-    GpioWrite(config->ClockGpio, GPIO_LOW);
 
     switch (config->Type) {
         case GAMEPAD_NES:
@@ -67,27 +66,30 @@ void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const confi
         return;
     }
 
+    // Latch the shift register.
 	GpioPulse(config->LatchGpio);
 
     for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
-        Gamepad *gamepad = &gamepads[i];
-        gamepad->State = 0;
+        (*(gamepads + i)).State = 0;
     }
 
+    Gamepad *gamepad;
 	for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
 		for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
-			Gamepad *gamepad = &gamepads[i];
+			gamepad = &gamepads[i];
 
+            // SNES sets gpio low when button pressed.
 			if (GpioRead(gamepad->DataGpio) == GPIO_LOW) {
                 gamepad->State |= (1 << i);
 			}
 		}
 
+        // Shift the shift register
 		GpioPulse(config->ClockGpio);
 	}
 
     for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
-        Gamepad *gamepad = &gamepads[i];
+        gamepad = &gamepads[i];
 
         // set to 0 if the controller is not connected
         if ((gamepad->State & NOT_CONNECTED_MASK) == NOT_CONNECTED_MASK) {

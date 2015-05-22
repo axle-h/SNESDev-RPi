@@ -209,28 +209,28 @@ void ProcessGamepadFrame(Gamepad *gamepads, InputDevice *gamepadDevices, Gamepad
         InputDevice *gamepadDevice = &gamepadDevices[i];
         const uint16_t state = gamepads[i].State;
 
-        ProcessGamepadButton(gamepadDevice, state, GPAD_SNES_A, BTN_A);
-        ProcessGamepadButton(gamepadDevice, state, GPAD_SNES_B, BTN_B);
-        ProcessGamepadButton(gamepadDevice, state, GPAD_SNES_X, BTN_X);
-        ProcessGamepadButton(gamepadDevice, state, GPAD_SNES_Y, BTN_Y);
-        ProcessGamepadButton(gamepadDevice, state, GPAD_SNES_L, BTN_TL);
-        ProcessGamepadButton(gamepadDevice, state, GPAD_SNES_R, BTN_TR);
-        ProcessGamepadButton(gamepadDevice, state, GPAD_SNES_SELECT, BTN_SELECT);
-        ProcessGamepadButton(gamepadDevice, state, GPAD_SNES_START, BTN_START);
+        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_A, BTN_A);
+        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_B, BTN_B);
+        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_X, BTN_X);
+        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_Y, BTN_Y);
+        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_L, BTN_TL);
+        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_R, BTN_TR);
+        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_SELECT, BTN_SELECT);
+        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_START, BTN_START);
 
         // X Axis.
-        if ((state & GPAD_SNES_LEFT) == GPAD_SNES_LEFT) {
+        if ((state & GAMEPAD_BUTTON_LEFT) == GAMEPAD_BUTTON_LEFT) {
             WriteAxis(gamepadDevice, ABS_X, 0);
-        } else if ((state & GPAD_SNES_RIGHT) == GPAD_SNES_RIGHT) {
+        } else if ((state & GAMEPAD_BUTTON_RIGHT) == GAMEPAD_BUTTON_RIGHT) {
             WriteAxis(gamepadDevice, ABS_X, 4);
         } else {
             WriteAxis(gamepadDevice, ABS_X, 2);
         }
 
         // Y Axis.
-        if ((state & GPAD_SNES_UP) == GPAD_SNES_UP) {
+        if ((state & GAMEPAD_BUTTON_UP) == GAMEPAD_BUTTON_UP) {
             WriteAxis(gamepadDevice, ABS_Y, 0);
-        } else if ((state & GPAD_SNES_DOWN) == GPAD_SNES_DOWN) {
+        } else if ((state & GAMEPAD_BUTTON_DOWN) == GAMEPAD_BUTTON_DOWN) {
             WriteAxis(gamepadDevice, ABS_Y, 4);
         } else {
             WriteAxis(gamepadDevice, ABS_Y, 2);
