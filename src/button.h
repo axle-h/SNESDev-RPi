@@ -29,6 +29,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "uinput.h"
 
 typedef enum {
     BUTTON_STATE_IDLE,
@@ -38,7 +39,8 @@ typedef enum {
 
 typedef struct {
 	uint8_t Gpio;
-    ButtonState state;
+    InputKey Key;
+    ButtonState State;
 } Button;
 
 bool OpenButton(Button *button);

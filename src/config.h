@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "gamepad.h"
+#include "uinput.h"
 
 
 typedef struct {
@@ -12,17 +13,26 @@ typedef struct {
 } GamepadConfig;
 
 typedef struct {
+    unsigned int Id;
+    bool Enabled;
+    InputKey Key;
+    uint8_t DataGpio;
+} ButtonConfig;
+
+typedef struct {
     bool RunAsDaemon;
     bool DebugEnabled;
     const char *PidFile;
+
     unsigned int NumberOfGamepads;
     GamepadConfig *Gamepads;
     GamepadType Type;
     uint8_t ClockGpio;
     uint8_t LatchGpio;
     unsigned int GamepadPollFrequency;
-    bool ButtonEnabled;
-    uint8_t ButtonGpio;
+
+    unsigned int NumberOfButtons;
+    ButtonConfig *Buttons;
     unsigned int ButtonPollFrequency;
 } SNESDevConfig;
 

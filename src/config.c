@@ -1,7 +1,6 @@
 #include <stdbool.h>
 #include <confuse.h>
 #include <unistd.h>
-#include <string.h>
 #include <stdlib.h>
 #include <argp.h>
 #include "config.h"
@@ -11,11 +10,14 @@
 
 #define CFG_ENABLED "Enabled"
 #define CFG_GPIO "Gpio"
+#define CFG_KEY "Key"
 #define CFG_POLL_FREQ "PollFrequency"
 
 #define CFG_GAMEPADS "Gamepads"
 #define CFG_GAMEPAD "Gamepad"
 #define CFG_GAMEPAD_TYPE "Type"
+
+#define CFG_BUTTONS "Buttons"
 #define CFG_BUTTON "Button"
 
 #define OPT_USAGE ""
@@ -40,6 +42,7 @@ static const struct argp_option options[] = {
 
 static bool ValidateConfig(SNESDevConfig *config, const unsigned int maxGamepads);
 static int VerifyGamepadType(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result);
+static int VerifyInputKey(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result);
 static Arguments ParseArguments(int argc, char **argv);
 
 bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, const unsigned int maxGamepads, SNESDevConfig *config) {
@@ -62,14 +65,20 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, cons
 
     cfg_opt_t ButtonOpts[] = {
             CFG_BOOL(CFG_ENABLED, cfg_false, CFGF_NONE),
+            CFG_INT_CB(CFG_KEY, 0, CFGF_NONE, &VerifyInputKey),
             CFG_INT(CFG_GPIO, 0, CFGF_NONE),
+            CFG_END()
+    };
+
+    cfg_opt_t ButtonsOpts[] = {
+            CFG_SEC(CFG_BUTTON, ButtonOpts, CFGF_MULTI | CFGF_TITLE),
             CFG_INT(CFG_POLL_FREQ, 0, CFGF_NONE),
             CFG_END()
     };
 
     cfg_opt_t opts[] = {
             CFG_SEC(CFG_GAMEPADS, GamepadsOpts, CFGF_NONE),
-            CFG_SEC(CFG_BUTTON, ButtonOpts, CFGF_NONE),
+            CFG_SEC(CFG_BUTTONS, ButtonsOpts, CFGF_NONE),
             CFG_END()
     };
 
@@ -89,29 +98,46 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, cons
     config->ClockGpio = (uint8_t) cfg_getint(gamepadsSection, CFG_CLOCK_GPIO);
     config->LatchGpio = (uint8_t) cfg_getint(gamepadsSection, CFG_LATCH_GPIO);
     config->GamepadPollFrequency = (unsigned int) cfg_getint(gamepadsSection, CFG_POLL_FREQ);
-    config->NumberOfGamepads = cfg_size(gamepadsSection, CFG_GAMEPAD);
     config->Type = (GamepadType)cfg_getint(gamepadsSection, CFG_GAMEPAD_TYPE);
+    config->NumberOfGamepads = cfg_size(gamepadsSection, CFG_GAMEPAD);
 
-    if(config->NumberOfGamepads > maxGamepads) {
-        config->NumberOfGamepads = maxGamepads;
+    if(config->NumberOfGamepads != 0) {
+        if(config->NumberOfGamepads > maxGamepads) {
+            config->NumberOfGamepads = maxGamepads;
+        }
+        config->Gamepads = malloc(config->NumberOfGamepads * sizeof(GamepadConfig));
+
+        // TODO: Sort by gamepad id.
+        for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
+            cfg_t *gamepadSection = cfg_getnsec(gamepadsSection, CFG_GAMEPAD, i);
+
+            GamepadConfig *gamepadConfig = &config->Gamepads[i];
+            gamepadConfig->Id = (unsigned int) atoi(cfg_title(gamepadSection));
+            gamepadConfig->Enabled = cfg_getbool(gamepadSection, CFG_ENABLED) ? true : false;
+            gamepadConfig->DataGpio = (uint8_t) cfg_getint(gamepadSection, CFG_GPIO);
+        }
     }
-    config->Gamepads = malloc(config->NumberOfGamepads * sizeof(GamepadConfig));
 
-    // TODO: Sort by gamepad id.
-    for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
-        cfg_t *gamepadSection = cfg_getnsec(gamepadsSection, CFG_GAMEPAD, i);
+    // Parse buttons section.
+    cfg_t *buttonsSection = cfg_getsec(cfg, CFG_BUTTONS);
+    config->NumberOfButtons =cfg_size(buttonsSection, CFG_BUTTON);
 
-        GamepadConfig *gamepadConfig = &config->Gamepads[i];
-        gamepadConfig->Id = (unsigned int) atoi(cfg_title(gamepadSection));
-        gamepadConfig->Enabled = cfg_getbool(gamepadSection, CFG_ENABLED) ? true : false;
-        gamepadConfig->DataGpio = (uint8_t) cfg_getint(gamepadSection, CFG_GPIO);
+    if(config->NumberOfButtons != 0) {
+        config->Buttons = malloc(config->NumberOfButtons * sizeof(ButtonConfig));
+
+        // TODO: Sort by button id.
+        for (unsigned int i = 0; i < config->NumberOfButtons; i++) {
+            cfg_t *buttonSection = cfg_getnsec(buttonsSection, CFG_BUTTON, i);
+            ButtonConfig *buttonConfig = &config->Buttons[i];
+
+            buttonConfig->Id = (unsigned int) atoi(cfg_title(buttonSection));
+            buttonConfig->Enabled = cfg_getbool(buttonSection, CFG_ENABLED) ? true : false;
+            buttonConfig->Key = (InputKey) cfg_getint(buttonSection, CFG_KEY);
+            buttonConfig->DataGpio = (uint8_t) cfg_getint(buttonSection, CFG_GPIO);
+        }
+
+        config->ButtonPollFrequency = (unsigned int) cfg_getint(buttonsSection, CFG_POLL_FREQ);
     }
-
-    // Parse button options.
-    cfg_t *buttonSection = cfg_getsec(cfg, CFG_BUTTON);
-    config->ButtonEnabled = cfg_getbool(buttonSection, CFG_ENABLED);
-    config->ButtonGpio = (uint8_t) cfg_getint(buttonSection, CFG_GPIO);
-    config->ButtonPollFrequency = (unsigned int) cfg_getint(buttonSection, CFG_POLL_FREQ);
 
     cfg_free(cfg);
 
@@ -130,7 +156,7 @@ static bool ValidateConfig(SNESDevConfig *config, const unsigned int maxGamepads
     }
 
     if(config->GamepadPollFrequency == 0) {
-        fprintf(stderr, "Gamepad %s Must be > 0\n", CFG_POLL_FREQ);
+        fprintf(stderr, "Gamepad %s must be > 0\n", CFG_POLL_FREQ);
         return false;
     }
 
@@ -166,17 +192,24 @@ static bool ValidateConfig(SNESDevConfig *config, const unsigned int maxGamepads
         return false;
     }
 
-    if(!config->ButtonEnabled) {
+    anyEnabled = false;
+    for(unsigned int i = 0; i < config->NumberOfButtons; i++) {
+        ButtonConfig *button = &config->Buttons[i];
+        if(button == NULL || button->DataGpio == 0 || button->Id == 0) {
+            fprintf(stderr, "Bad button config\n");
+            return false;
+        }
+        if(button->Enabled) {
+            anyEnabled = true;
+        }
+    }
+
+    if(!anyEnabled) {
         return true;
     }
 
-    if(config->ButtonGpio == 0) {
-        fprintf(stderr, "Button %s Must be > 0\n", CFG_GPIO);
-        return false;
-    }
-
     if(config->ButtonPollFrequency == 0) {
-        fprintf(stderr, "Button %s Must be > 0\n", CFG_POLL_FREQ);
+        fprintf(stderr, "Button %s must be > 0\n", CFG_POLL_FREQ);
         return false;
     }
 
@@ -195,6 +228,17 @@ static int VerifyGamepadType(cfg_t *cfg, cfg_opt_t *opt, const char *value, void
     return 0;
 }
 
+static int VerifyInputKey(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result)
+{
+    InputKey key = GetInputKeyValue(value);
+    if(key == 0) {
+        cfg_error(cfg, "Key is not valid");
+        return -1;
+    }
+    *(long int *)result = key;
+
+    return 0;
+}
 
 static Arguments ParseArguments(const int argc, char **argv) {
     Arguments arguments;

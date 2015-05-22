@@ -29,27 +29,28 @@
 #include "GPIO.h"
 
 bool OpenButton(Button *button) {
+    button->State = BUTTON_STATE_IDLE;
 	return GpioOpen(button->Gpio, GPIO_INPUT);
 }
 
 void ReadButton(Button *const button) {
 	bool buttonPressed = GpioRead(button->Gpio) == GPIO_HIGH;
-    switch (button->state) {
+    switch (button->State) {
         case BUTTON_STATE_IDLE:
             if (buttonPressed) {
-                button->state = BUTTON_STATE_PRESSED;
+                button->State = BUTTON_STATE_PRESSED;
             }
             break;
         case BUTTON_STATE_PRESSED:
             if (!buttonPressed) {
-                button->state = BUTTON_STATE_RELEASED;
+                button->State = BUTTON_STATE_RELEASED;
             }
             break;
         case BUTTON_STATE_RELEASED:
             if (buttonPressed) {
-                button->state = BUTTON_STATE_PRESSED;
+                button->State = BUTTON_STATE_PRESSED;
             } else {
-                button->state = BUTTON_STATE_IDLE;
+                button->State = BUTTON_STATE_IDLE;
             }
             break;
     }

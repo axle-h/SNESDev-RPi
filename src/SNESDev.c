@@ -54,9 +54,9 @@ bool running;
 
 void InitLog(SNESDevConfig const* config);
 void ConfigureGamepads(SNESDevConfig const* config, Gamepad *gamepads, InputDevice *gamepadDevices, GamepadControlPins *gamepadControlPins);
-void ConfigureButtons(SNESDevConfig const* config, Button *button, InputDevice *keyboardDevice);
+unsigned int ConfigureButtons(SNESDevConfig const* config, Button *buttons, InputDevice *keyboardDevice);
 void ProcessGamepadFrame(Gamepad *gamepads, InputDevice *gamepadDevices, GamepadControlPins *gamepadControlPins);
-void ProcessButtonFrame(Button *button, InputDevice *keyboardDevice);
+void ProcessButtonFrame(Button *buttons, InputDevice *keyboardDevice, unsigned int numberOfEnabledButtons);
 void SetupSignals();
 void SignalHandler(int signal);
 static inline void ProcessGamepadButton(InputDevice *gamepad, uint16_t state, uint16_t mask, unsigned short int key);
@@ -66,7 +66,6 @@ int main(int argc, char *argv[]) {
     if(!TryGetSNESDevConfig(CONFIG_FILE, argc, argv, MAX_GAMEPADS, &config)) {
         return EXIT_FAILURE;
     }
-    config.DebugEnabled = true;
 
     InitLog(&config);
 
@@ -85,9 +84,9 @@ int main(int argc, char *argv[]) {
     InputDevice gamepadDevices[config.NumberOfGamepads];
     ConfigureGamepads(&config, &gamepads[0], &gamepadDevices[0], &gamepadControlPins);
 
-    Button button;
+    Button buttons[config.NumberOfButtons];
     InputDevice keyboardDevice;
-    ConfigureButtons(&config, &button, &keyboardDevice);
+    unsigned int numberOfEnabledButtons = ConfigureButtons(&config, &buttons[0], &keyboardDevice);
 
     SetupSignals();
 
@@ -98,8 +97,8 @@ int main(int argc, char *argv[]) {
 	while (running) {
         ProcessGamepadFrame(gamepads, gamepadDevices, &gamepadControlPins);
 
-        if (config.ButtonEnabled && frameDelayCount == 0) {
-            ProcessButtonFrame(&button, &keyboardDevice);
+        if (frameDelayCount == 0) {
+            ProcessButtonFrame(buttons, &keyboardDevice, numberOfEnabledButtons);
         }
 
         frameDelayCount++;
@@ -108,12 +107,12 @@ int main(int argc, char *argv[]) {
 	}
 
     CloseInputDevice(&keyboardDevice);
-
     for (unsigned int i = 0; i < gamepadControlPins.NumberOfGamepads; i++) {
         CloseInputDevice(&gamepadDevices[i]);
     }
 
     free(config.Gamepads);
+    free(config.Buttons);
 
     closelog();
     bcm2835_close();
@@ -134,8 +133,15 @@ void InitLog(SNESDevConfig const* config) {
                gamepad->Id, GetGamepadTypeString(config->Type), config->GamepadPollFrequency, gamepad->DataGpio, config->ClockGpio, config->LatchGpio);
     }
 
-    syslog(LOG_INFO, "ButtonEnabled: %s, ButtonGpio: %u, ButtonPollFrequency: %u",
-           config->ButtonEnabled ? true_str : false_str, config->ButtonGpio, config->ButtonPollFrequency);
+    for(unsigned int i = 0; i < config->NumberOfButtons; i++) {
+        ButtonConfig *button = &config->Buttons[i];
+
+        if(!button->Enabled) {
+            continue;
+        }
+        syslog(LOG_INFO, "Button%u: { Key: %s, PollFrequency: %u, Gpio: { Data: %u } }",
+               button->Id, GetInputKeyString(button->Key), config->ButtonPollFrequency, button->DataGpio);
+    }
 }
 
 void ConfigureGamepads(SNESDevConfig const* config, Gamepad *gamepads, InputDevice *gamepadDevices, GamepadControlPins *gamepadControlPins) {
@@ -172,14 +178,26 @@ void ConfigureGamepads(SNESDevConfig const* config, Gamepad *gamepads, InputDevi
     }
 }
 
-void ConfigureButtons(SNESDevConfig const* config, Button *button, InputDevice *keyboardDevice) {
-    if (config->ButtonEnabled) {
-        button->Gpio = config->ButtonGpio;
-        OpenButton(button);
+unsigned int ConfigureButtons(SNESDevConfig const* config, Button *buttons, InputDevice *keyboardDevice) {
+    unsigned int numberOfEnabledButtons = 0;
+    for(unsigned int i = 0; i < config->NumberOfButtons; i++) {
+        ButtonConfig *buttonConfig = &config->Buttons[i];
+        if(!buttonConfig->Enabled) {
+            continue;
+        }
 
+        // Open button GPIO interface.
+        Button *button = &buttons[numberOfEnabledButtons];
+        button->Gpio = buttonConfig->DataGpio;
+        button->Key = buttonConfig->Key;
+        OpenButton(button);
+    }
+    if(numberOfEnabledButtons > 0) {
         keyboardDevice->Name = KEYBOARD_DEVICE_NAME;
         OpenInputDevice(INPUT_KEYBOARD, keyboardDevice);
-	}
+    }
+
+    return numberOfEnabledButtons;
 }
 
 void ProcessGamepadFrame(Gamepad *gamepads, InputDevice *gamepadDevices, GamepadControlPins *gamepadControlPins) {
@@ -229,20 +247,24 @@ static inline void ProcessGamepadButton(InputDevice *gamepad, uint16_t state, ui
     }
 }
 
-void ProcessButtonFrame(Button *button, InputDevice *keyboardDevice) {
-    ReadButton(button);
+void ProcessButtonFrame(Button *buttons, InputDevice *keyboardDevice, unsigned int numberOfEnabledButtons) {
+    for(unsigned int i = 0; i < numberOfEnabledButtons; i++) {
+        Button *button = &buttons[i];
 
-    switch (button->state) {
-        case BUTTON_STATE_IDLE:
-            break;
-        case BUTTON_STATE_PRESSED:
-            WriteKey(keyboardDevice, KEY_ESC, true);
-            WriteSync(keyboardDevice);
-            break;
-        case BUTTON_STATE_RELEASED:
-            WriteKey(keyboardDevice, KEY_ESC, false);
-            WriteSync(keyboardDevice);
-            break;
+        ReadButton(button);
+
+        switch (button->State) {
+            case BUTTON_STATE_IDLE:
+                break;
+            case BUTTON_STATE_PRESSED:
+                WriteKey(keyboardDevice, button->Key, true);
+                WriteSync(keyboardDevice);
+                break;
+            case BUTTON_STATE_RELEASED:
+                WriteKey(keyboardDevice, button->Key, false);
+                WriteSync(keyboardDevice);
+                break;
+        }
     }
 }
 
