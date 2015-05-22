@@ -47,13 +47,13 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, cons
 
     cfg_opt_t GamepadOpts[] = {
             CFG_BOOL(CFG_ENABLED, cfg_false, CFGF_NONE),
-            CFG_INT_CB(CFG_GAMEPAD_TYPE, 0, CFGF_NONE, &VerifyGamepadType),
             CFG_INT(CFG_GPIO, 0, CFGF_NONE),
             CFG_END()
     };
 
     cfg_opt_t GamepadsOpts[] = {
             CFG_SEC(CFG_GAMEPAD, GamepadOpts, CFGF_MULTI | CFGF_TITLE),
+            CFG_INT_CB(CFG_GAMEPAD_TYPE, 0, CFGF_NONE, &VerifyGamepadType),
             CFG_INT(CFG_CLOCK_GPIO, 0, CFGF_NONE),
             CFG_INT(CFG_LATCH_GPIO, 0, CFGF_NONE),
             CFG_INT(CFG_POLL_FREQ, 0, CFGF_NONE),
@@ -90,21 +90,21 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, cons
     config->LatchGpio = (uint8_t) cfg_getint(gamepadsSection, CFG_LATCH_GPIO);
     config->GamepadPollFrequency = (unsigned int) cfg_getint(gamepadsSection, CFG_POLL_FREQ);
     config->NumberOfGamepads = cfg_size(gamepadsSection, CFG_GAMEPAD);
+    config->Type = (GamepadType)cfg_getint(gamepadsSection, CFG_GAMEPAD_TYPE);
 
-    GamepadConfig gamepads[config->NumberOfGamepads];
-    config->Gamepads = &gamepads[0];
+    if(config->NumberOfGamepads > maxGamepads) {
+        config->NumberOfGamepads = maxGamepads;
+    }
+    config->Gamepads = malloc(config->NumberOfGamepads * sizeof(GamepadConfig));
 
     // TODO: Sort by gamepad id.
     for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
         cfg_t *gamepadSection = cfg_getnsec(gamepadsSection, CFG_GAMEPAD, i);
 
-        GamepadConfig gamepad;
-        gamepad.Id = (unsigned int) atoi(cfg_title(gamepadSection));
-        gamepad.Enabled = cfg_getbool(gamepadSection, CFG_ENABLED) ? true : false;
-        gamepad.Type = (GamepadType)cfg_getint(gamepadSection, CFG_GAMEPAD_TYPE);
-        gamepad.DataGpio = (uint8_t) cfg_getint(gamepadSection, CFG_GPIO);
-
-        gamepads[i] = gamepad;
+        GamepadConfig *gamepadConfig = &config->Gamepads[i];
+        gamepadConfig->Id = (unsigned int) atoi(cfg_title(gamepadSection));
+        gamepadConfig->Enabled = cfg_getbool(gamepadSection, CFG_ENABLED) ? true : false;
+        gamepadConfig->DataGpio = (uint8_t) cfg_getint(gamepadSection, CFG_GPIO);
     }
 
     // Parse button options.

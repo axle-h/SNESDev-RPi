@@ -8,7 +8,6 @@
 typedef struct {
     unsigned int Id;
     bool Enabled;
-    GamepadType Type;
     uint8_t DataGpio;
 } GamepadConfig;
 
@@ -18,6 +17,7 @@ typedef struct {
     const char *PidFile;
     unsigned int NumberOfGamepads;
     GamepadConfig *Gamepads;
+    GamepadType Type;
     uint8_t ClockGpio;
     uint8_t LatchGpio;
     unsigned int GamepadPollFrequency;

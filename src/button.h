@@ -24,40 +24,23 @@
  *
  * Raspberry Pi is a trademark of the Raspberry Pi Foundation.
  */
- 
-#include "btn.h"
-#include "GPIO.h"
 
-int16_t btn_open(BTN_DEV_ST * btn) {
-	btn->state = BTN_STATE_IDLE;
-	return GpioOpen(btn->pin, GPIO_INPUT);
-}
+#pragma once
 
-void btn_read(BTN_DEV_ST* const btn) {
-	// read the state of the button into a local variable
-	uint8_t buttonState = GpioRead(btn->pin);
+#include <stdint.h>
+#include <stdbool.h>
 
-	// three-state machine:
-	// - press and hold: send "r" key (for rewind function of RetroArch)
-	// - press and release three times: send "ESC"
-	// - press and release five times: shutdown
-	switch (btn->state) {
-	case BTN_STATE_IDLE:
-		if (buttonState == GPIO_HIGH) {
-			btn->state = BTN_STATE_PRESSED;
-		}
-		break;
-	case BTN_STATE_PRESSED:
-		if (buttonState == GPIO_LOW) {
-			btn->state = BTN_STATE_RELEASED;
-		}
-		break;
-	case BTN_STATE_RELEASED:
-		if (buttonState == GPIO_LOW) {
-			btn->state = BTN_STATE_IDLE;
-		} else if (buttonState == GPIO_HIGH) {
-			btn->state = BTN_STATE_PRESSED;
-		}
-		break;
-	}
-}
+typedef enum {
+    BUTTON_STATE_IDLE,
+    BUTTON_STATE_PRESSED,
+    BUTTON_STATE_RELEASED
+} ButtonState;
+
+typedef struct {
+	uint8_t Gpio;
+    ButtonState state;
+} Button;
+
+bool OpenButton(Button *button);
+void ReadButton(Button *const button);
+

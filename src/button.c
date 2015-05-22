@@ -24,20 +24,33 @@
  *
  * Raspberry Pi is a trademark of the Raspberry Pi Foundation.
  */
+ 
+#include "button.h"
+#include "GPIO.h"
 
-#pragma once
+bool OpenButton(Button *button) {
+	return GpioOpen(button->Gpio, GPIO_INPUT);
+}
 
-#include <stdint.h>
-
-typedef enum {
-	BTN_STATE_IDLE = 0, BTN_STATE_RELEASED = 1, BTN_STATE_PRESSED = 2
-} BTN_STATE_E;
-
-typedef struct {
-	int16_t pin;
-	BTN_STATE_E state;
-} BTN_DEV_ST;
-
-int16_t btn_open(BTN_DEV_ST* btn);
-void btn_read(BTN_DEV_ST* const btn);
-
+void ReadButton(Button *const button) {
+	bool buttonPressed = GpioRead(button->Gpio) == GPIO_HIGH;
+    switch (button->state) {
+        case BUTTON_STATE_IDLE:
+            if (buttonPressed) {
+                button->state = BUTTON_STATE_PRESSED;
+            }
+            break;
+        case BUTTON_STATE_PRESSED:
+            if (!buttonPressed) {
+                button->state = BUTTON_STATE_RELEASED;
+            }
+            break;
+        case BUTTON_STATE_RELEASED:
+            if (buttonPressed) {
+                button->state = BUTTON_STATE_PRESSED;
+            } else {
+                button->state = BUTTON_STATE_IDLE;
+            }
+            break;
+    }
+}

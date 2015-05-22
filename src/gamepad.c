@@ -32,62 +32,67 @@
 #include "gamepad.h"
 #include "GPIO.h"
 
+#define SNES_CLOCK 16
+#define NES_CLOCK 8
+
+// It's impossible to press up and down at the same time
+#define NOT_CONNECTED_MASK (GPAD_SNES_UP | GPAD_SNES_DOWN)
+
 DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
 
-bool OpenGamepad(GPAD_ST *const gamepad) {
-	gamepad->state = 0;
+bool OpenGamepadControlPins(GamepadControlPins *const config) {
+    bool success = GpioOpen(config->LatchGpio, GPIO_OUTPUT) && GpioOpen(config->ClockGpio, GPIO_OUTPUT);
+    GpioWrite(config->LatchGpio, GPIO_LOW);
+    GpioWrite(config->ClockGpio, GPIO_LOW);
 
-    bool success = false;
-    success |= GpioOpen(gamepad->pin_strobe, GPIO_OUTPUT);
-    success |= GpioOpen(gamepad->pin_clock, GPIO_OUTPUT);
-    success |= GpioOpen(gamepad->pin_data, GPIO_INPUT);
+    switch (config->Type) {
+        case GAMEPAD_NES:
+            config->ClockPulses = NES_CLOCK;
+            break;
+        case GAMEPAD_SNES:
+            config->ClockPulses = SNES_CLOCK;
+            break;
+    }
 
-    GpioWrite(gamepad->pin_strobe, GPIO_LOW);
-    GpioWrite(gamepad->pin_clock, GPIO_LOW);
-	
-	return success;
+    return success;
 }
 
-void ReadGamepads(GPAD_ST *const gpad) {
-	GpioPulse(gpad->pin_strobe);
+bool OpenGamepad(Gamepad *const gamepad) {
+	gamepad->State = 0;
+    return GpioOpen(gamepad->DataGpio, GPIO_INPUT);
+}
 
-	gpad->state = 0;
-	switch (gpad->type) {
-		case GAMEPAD_SNES:
-			for (unsigned int i = 0; i < 16; i++) {
+void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const config) {
+    if(config->NumberOfGamepads == 0) {
+        return;
+    }
 
-				uint8_t curpin1 = GpioRead(gpad->pin_data);
-                GpioPulse(gpad->pin_clock);
+	GpioPulse(config->LatchGpio);
 
-				if (curpin1 == GPIO_LOW) {
-					gpad->state |= (1 << i);
-				}
+    for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
+        Gamepad *gamepad = &gamepads[i];
+        gamepad->State = 0;
+    }
+
+	for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
+		for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
+			Gamepad *gamepad = &gamepads[i];
+
+			if (GpioRead(gamepad->DataGpio) == GPIO_LOW) {
+                gamepad->State |= (1 << i);
 			}
+		}
 
-			// set to 0 if the controller is not connected
-			if ((gpad->state & 0xFFF) == 0xFFF) {
-				gpad->state = 0;
-			}
-		break;
-	case GAMEPAD_NES:
-			for (unsigned int i = 0; i < 8; i++) {
-
-				uint8_t curpin1 = GpioRead(gpad->pin_data);
-                GpioPulse(gpad->pin_clock);
-
-				if (curpin1 == GPIO_LOW) {
-					gpad->state |= (1 << i);
-				}
-			}
-
-			// set to 0 if the controller is not connected
-			if ((gpad->state & 0xFFF) == 0xFFF) {
-				gpad->state = 0;
-			}
-		break;
-	default:
-		break;
+		GpioPulse(config->ClockGpio);
 	}
 
+    for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
+        Gamepad *gamepad = &gamepads[i];
+
+        // set to 0 if the controller is not connected
+        if ((gamepad->State & NOT_CONNECTED_MASK) == NOT_CONNECTED_MASK) {
+            gamepad->State = 0;
+        }
+    }
 }
 

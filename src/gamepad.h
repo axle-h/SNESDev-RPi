@@ -32,18 +32,18 @@
 
 /* bit masks for checking the button states for SNES controllers */
 
-#define GPAD_SNES_B       0x01
-#define GPAD_SNES_Y       0x02
-#define GPAD_SNES_SELECT  0x04
-#define GPAD_SNES_START   0x08
-#define GPAD_SNES_UP      0x10
-#define GPAD_SNES_DOWN    0x20
-#define GPAD_SNES_LEFT    0x40
-#define GPAD_SNES_RIGHT   0x80
-#define GPAD_SNES_A       0x100
-#define GPAD_SNES_X       0x200
-#define GPAD_SNES_L       0x400
-#define GPAD_SNES_R       0x800
+#define GPAD_SNES_B       0x0001
+#define GPAD_SNES_Y       0x0002
+#define GPAD_SNES_SELECT  0x0004
+#define GPAD_SNES_START   0x0008
+#define GPAD_SNES_UP      0x0010
+#define GPAD_SNES_DOWN    0x0020
+#define GPAD_SNES_LEFT    0x0040
+#define GPAD_SNES_RIGHT   0x0080
+#define GPAD_SNES_A       0x0100
+#define GPAD_SNES_X       0x0200
+#define GPAD_SNES_L       0x0400
+#define GPAD_SNES_R       0x0800
 
 #define ENUM_GAMEPAD_TYPE(XX) \
     XX(GAMEPAD_NES, =1, nes) \
@@ -51,15 +51,20 @@
 
 DECLARE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE)
 
-/* holds the GPIO pins for the clock, strobe and data signals */
 typedef struct {
-    GamepadType type;
-	uint8_t pin_clock;
-	uint8_t pin_strobe;
-	uint8_t pin_data;
-	uint16_t state;
-} GPAD_ST;
+	uint8_t DataGpio;
+	uint16_t State;
+} Gamepad;
 
-bool OpenGamepad(GPAD_ST *const gamepad);
-void ReadGamepads(GPAD_ST *const gpad);
+typedef struct {
+	uint8_t ClockGpio;
+	uint8_t LatchGpio;
+    unsigned int NumberOfGamepads;
+    GamepadType Type;
+    unsigned int ClockPulses;
+} GamepadControlPins;
+
+bool OpenGamepadControlPins(GamepadControlPins *const config);
+bool OpenGamepad(Gamepad *const gamepad);
+void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const config);
 
