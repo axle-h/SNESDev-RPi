@@ -59,4 +59,5 @@ void GpioPulse(uint8_t pin, uint64_t micros) {
     bcm2835_gpio_write(pin, HIGH);
 	bcm2835_delayMicroseconds(micros);
     bcm2835_gpio_write(pin, LOW);
+	bcm2835_delayMicroseconds(6);
 }
