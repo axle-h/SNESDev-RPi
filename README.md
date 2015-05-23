@@ -12,7 +12,7 @@ First of all, make sure that Git is installed:
 
 ```shell
 sudo apt-get update
-sudo apt-get install -y git
+sudo apt-get install -y build-essential git cmake libconfuse-dev
 ```
 
 
@@ -20,15 +20,15 @@ SNESDev is downloaded and installed with
 
 ```shell
 cd
-git clone git://github.com/petrockblog/SNESDev-RPi.git
+git clone git://github.com/axle-h/SNESDev-RPi.git
 cd SNESDev-RPi
-sudo make
+mkdir build && cd build
+cmake -D CMAKE_BUILD_TYPE=Release ../
+make
 sudo make install
 ```
 
-The lines above build and install two needed libraries and SNESDev-Rpi. The sudo-command is needed for the installation of the two libraries. It is recommend to run SNESDev as a service, which is described [below](https://github.com/petrockblog/SNESDev-RPi#running-snesdev-as-a-service).
-
-Alternatively, you can use the RetroPie Setup Script (https://github.com/petrockblog/RetroPie-Setup) for installing and configuring SNESDev.
+The lines above build and install two needed libraries and SNESDev-Rpi. The sudo-command is needed for the installation of the libraries.
 
 Running
 -------
@@ -51,7 +51,7 @@ If you want to have the uinput module automatically loaded, you can add "uinput"
 SNESDev has to be run as background process with
 
 ```shell
-sudo ~/SNESDev-RPi/bin/SNESDev &
+sudo service SNESDev start
 ```
 
 In order to access the uinput device SNESDev has to be run as root. This is (obviously) not so nice and is currently an issue. If you have a solution or suggestion for that, feel free to submit a pull request or send me a mail!
@@ -59,19 +59,9 @@ In order to access the uinput device SNESDev has to be run as root. This is (obv
 Configuring SNESDev-Rpi
 -----------------------
 
-SNESDev-Rpi is configured with the help of the configuration file ```/etc/snesdev.cfg```. It is a lightweighted configuration file and well commented. You can also use the RetroPie Setup Script (https://github.com/petrockblog/RetroPie-Setup) for configuring SNESDev.
-
-__IMPORTANT:__ You might need to configure the correct version of the RetroPie GPIO Adapter. The default version is 2.X. If you find a revision number 1.X on your RetroPie GPIO Adapter you need to set the configiration parameter "adapter_version" to "1x".
+SNESDev-Rpi is configured with the help of the configuration file ```/etc/gpio/snesdev.cfg```.
 
 
-Running SNESDev as a service
-----------------------------
-
-SNESDev-RPi comes with a script that allows SNESDev to be run as a service. The installation command for that is
-
-```shell
-sudo make installservice
-```
 
 Uninstalling SNESDev service
 ----------------------------
@@ -79,20 +69,9 @@ Uninstalling SNESDev service
 You can uninstall the SNESSDev-Rpi service with the following command:
 
 ```shell
-sudo make uninstallservice
+sudo make uninstall
 ```
-
-
-Button Polling
---------------
-
-If you use the functionality for polling a button (on GPIOin P1-11), a three-state automaton is implemented:
  
-- press and hold: send "r" key (for rewind function of RetroArch)
-- press and release three times: send "ESC"
-- press and release five times: shutdown
-
-For comments, corrections, and suggestions visit https://github.com/petrockblog/SNESDev-RPi.
 
 Have fun!
 
