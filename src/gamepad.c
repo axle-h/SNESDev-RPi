@@ -80,7 +80,7 @@ void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const confi
 
             // SNES sets gpio low when button pressed.
 			if (GpioRead(gamepad->DataGpio) == GPIO_LOW) {
-                gamepad->State |= (1 << i);
+                gamepad->State |= (1 << clock);
 			}
 		}
 
