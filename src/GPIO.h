@@ -42,5 +42,5 @@ typedef enum {
 bool GpioOpen(uint8_t pin, GpioDirection direction);
 GpioLevel GpioRead(uint8_t pin);
 void GpioWrite(uint8_t pin, GpioLevel val);
-void GpioPulse(uint8_t pin);
+void GpioPulse(uint8_t pin, uint64_t micros);
 

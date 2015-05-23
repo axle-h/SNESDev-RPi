@@ -67,7 +67,7 @@ void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const confi
     }
 
     // Latch the shift register.
-	GpioPulse(config->LatchGpio);
+	GpioPulse(config->LatchGpio, 12);
 
     for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
         (*(gamepads + i)).State = 0;
@@ -85,7 +85,7 @@ void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const confi
 		}
 
         // Shift the shift register
-		GpioPulse(config->ClockGpio);
+		GpioPulse(config->ClockGpio, 6);
 	}
 
     for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
