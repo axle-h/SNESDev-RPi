@@ -43,6 +43,7 @@ DEFINE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON, unsigned int)
 
 bool OpenGamepadControlPins(GamepadControlPins *const config) {
     bool success = GpioOpen(config->LatchGpio, GPIO_OUTPUT) && GpioOpen(config->ClockGpio, GPIO_OUTPUT);
+    GpioWrite(config->ClockGpio, GPIO_HIGH);
 
     switch (config->Type) {
         case GAMEPAD_NES:
@@ -66,12 +67,12 @@ void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const confi
         return;
     }
 
-    // Latch the shift register.
-	GpioPulse(config->LatchGpio, 12);
-
     for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
         (*(gamepads + i)).State = 0;
     }
+
+    // Latch the shift register.
+    GpioPulseHigh(config->LatchGpio, 12, 6);
 
     Gamepad *gamepad;
 	for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
@@ -85,7 +86,7 @@ void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const confi
 		}
 
         // Shift the shift register
-		GpioPulse(config->ClockGpio, 6);
+		GpioPulseLow(config->ClockGpio, 6, 6);
 	}
 
     for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
