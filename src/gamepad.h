@@ -29,6 +29,7 @@
 
 #include <stdbool.h>
 #include "enum.h"
+#include "uinput.h"
 
 
 #define ENUM_GAMEPAD_BUTTON(XX) \
@@ -55,6 +56,17 @@ DECLARE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON)
 typedef struct {
 	uint8_t DataGpio;
 	uint16_t State;
+    uint16_t LastState;
+    bool B;
+    bool Y;
+    bool Select;
+    bool Start;
+    DigitalAxisValue YAxis;
+    DigitalAxisValue XAxis;
+    bool A;
+    bool X;
+    bool L;
+    bool R;
 } Gamepad;
 
 typedef struct {
@@ -68,4 +80,5 @@ typedef struct {
 bool OpenGamepadControlPins(GamepadControlPins *const config);
 bool OpenGamepad(Gamepad *const gamepad);
 void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const config);
+bool CheckGamepadState(Gamepad *const gamepad);
 

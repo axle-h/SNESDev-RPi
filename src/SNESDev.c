@@ -59,7 +59,7 @@ void ProcessGamepadFrame(Gamepad *gamepads, InputDevice *gamepadDevices, Gamepad
 void ProcessButtonFrame(Button *buttons, InputDevice *keyboardDevice, unsigned int numberOfEnabledButtons);
 void SetupSignals();
 void SignalHandler(int signal);
-static inline void ProcessGamepadButton(InputDevice *gamepad, uint16_t state, uint16_t mask, unsigned short int key);
+
 
 int main(int argc, char *argv[]) {
     SNESDevConfig config;
@@ -206,45 +206,23 @@ void ProcessGamepadFrame(Gamepad *gamepads, InputDevice *gamepadDevices, Gamepad
     ReadGamepads(&gamepads[0], gamepadControlPins);
 
     for(unsigned int i = 0; i < gamepadControlPins->NumberOfGamepads; i++) {
+        Gamepad *gamepad = &gamepads[i];
+        if(!CheckGamepadState(gamepad)) {
+            continue;
+        }
+
         InputDevice *gamepadDevice = &gamepadDevices[i];
-        const uint16_t state = gamepads[i].State;
-
-        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_A, BTN_A);
-        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_B, BTN_B);
-        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_X, BTN_X);
-        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_Y, BTN_Y);
-        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_L, BTN_TL);
-        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_R, BTN_TR);
-        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_SELECT, BTN_SELECT);
-        ProcessGamepadButton(gamepadDevice, state, GAMEPAD_BUTTON_START, BTN_START);
-
-        // X Axis.
-        if ((state & GAMEPAD_BUTTON_LEFT) == GAMEPAD_BUTTON_LEFT) {
-            WriteAxis(gamepadDevice, ABS_X, 0);
-        } else if ((state & GAMEPAD_BUTTON_RIGHT) == GAMEPAD_BUTTON_RIGHT) {
-            WriteAxis(gamepadDevice, ABS_X, 4);
-        } else {
-            WriteAxis(gamepadDevice, ABS_X, 2);
-        }
-
-        // Y Axis.
-        if ((state & GAMEPAD_BUTTON_UP) == GAMEPAD_BUTTON_UP) {
-            WriteAxis(gamepadDevice, ABS_Y, 0);
-        } else if ((state & GAMEPAD_BUTTON_DOWN) == GAMEPAD_BUTTON_DOWN) {
-            WriteAxis(gamepadDevice, ABS_Y, 4);
-        } else {
-            WriteAxis(gamepadDevice, ABS_Y, 2);
-        }
-
+        WriteKey(gamepadDevice, BTN_A, gamepad->A);
+        WriteKey(gamepadDevice, BTN_B, gamepad->B);
+        WriteKey(gamepadDevice, BTN_X, gamepad->X);
+        WriteKey(gamepadDevice, BTN_Y, gamepad->Y);
+        WriteKey(gamepadDevice, BTN_TL, gamepad->L);
+        WriteKey(gamepadDevice, BTN_TR, gamepad->R);
+        WriteKey(gamepadDevice, BTN_SELECT, gamepad->Select);
+        WriteKey(gamepadDevice, BTN_START, gamepad->Start);
+        WriteAxis(gamepadDevice, ABS_X, gamepad->XAxis);
+        WriteAxis(gamepadDevice, ABS_Y, gamepad->YAxis);
         WriteSync(gamepadDevice);
-    }
-}
-
-static inline void ProcessGamepadButton(InputDevice *gamepad, uint16_t state, uint16_t mask, unsigned short int key) {
-    if ((state & mask) == mask) {
-        WriteKey(gamepad, key, true);
-    } else {
-        WriteKey(gamepad, key, false);
     }
 }
 

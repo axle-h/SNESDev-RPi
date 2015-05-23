@@ -32,7 +32,7 @@
 #include "gamepad.h"
 #include "GPIO.h"
 
-#define SNES_CLOCK 16
+#define SNES_CLOCK 12
 #define NES_CLOCK 8
 
 // It's impossible to press up and down at the same time
@@ -40,6 +40,8 @@
 
 DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
 DEFINE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON, unsigned int)
+
+static inline void SetButtonStates(Gamepad *const gamepad);
 
 bool OpenGamepadControlPins(GamepadControlPins *const config) {
     bool success = GpioOpen(config->LatchGpio, GPIO_OUTPUT) && GpioOpen(config->ClockGpio, GPIO_OUTPUT);
@@ -58,7 +60,12 @@ bool OpenGamepadControlPins(GamepadControlPins *const config) {
 }
 
 bool OpenGamepad(Gamepad *const gamepad) {
+
+    // 0 out the states
+    gamepad->LastState = GAMEPAD_BUTTON_A;
 	gamepad->State = 0;
+    CheckGamepadState(gamepad);
+
     return GpioOpen(gamepad->DataGpio, GPIO_INPUT);
 }
 
@@ -67,14 +74,16 @@ void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const confi
         return;
     }
 
+    Gamepad *gamepad;
     for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
-        (*(gamepads + i)).State = 0;
+        gamepad = &gamepads[i];
+        gamepad->LastState = gamepad->State;
+        gamepad->State = 0;
     }
 
     // Latch the shift register.
     GpioPulseHigh(config->LatchGpio, 12, 6);
 
-    Gamepad *gamepad;
 	for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
 		for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
 			gamepad = &gamepads[i];
@@ -88,14 +97,39 @@ void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const confi
         // Shift the shift register
 		GpioPulseLow(config->ClockGpio, 6, 6);
 	}
-
-    for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
-        gamepad = &gamepads[i];
-
-        // set to 0 if the controller is not connected
-        if ((gamepad->State & NOT_CONNECTED_MASK) == NOT_CONNECTED_MASK) {
-            gamepad->State = 0;
-        }
-    }
 }
 
+bool CheckGamepadState(Gamepad *const gamepad) {
+    // set to 0 if the controller is not connected
+    if ((gamepad->State & NOT_CONNECTED_MASK) == NOT_CONNECTED_MASK) {
+        gamepad->State = 0;
+    }
+
+    if(gamepad->LastState == gamepad->State) {
+        return false;
+    }
+
+    gamepad->B = (gamepad->State & GAMEPAD_BUTTON_B) > 0;
+    gamepad->Y = (gamepad->State & GAMEPAD_BUTTON_Y) > 0;
+    gamepad->Select = (gamepad->State & GAMEPAD_BUTTON_SELECT) > 0;
+    gamepad->Start = (gamepad->State & GAMEPAD_BUTTON_START) > 0;
+
+    gamepad->YAxis = (gamepad->State & GAMEPAD_BUTTON_UP) > 0
+                     ? DIGITAL_AXIS_HIGH
+                     : (gamepad->State & GAMEPAD_BUTTON_DOWN) > 0
+                       ? DIGITAL_AXIS_LOW
+                       : DIGITAL_AXIS_ORIGIN;
+
+    gamepad->XAxis = (gamepad->State & GAMEPAD_BUTTON_LEFT) > 0
+                     ? DIGITAL_AXIS_HIGH
+                     : (gamepad->State & GAMEPAD_BUTTON_RIGHT) > 0
+                       ? DIGITAL_AXIS_LOW
+                       : DIGITAL_AXIS_ORIGIN;
+
+    gamepad->A = (gamepad->State & GAMEPAD_BUTTON_A) > 0;
+    gamepad->X = (gamepad->State & GAMEPAD_BUTTON_X) > 0;
+    gamepad->L = (gamepad->State & GAMEPAD_BUTTON_L) > 0;
+    gamepad->R = (gamepad->State & GAMEPAD_BUTTON_R) > 0;
+
+    return true;
+}

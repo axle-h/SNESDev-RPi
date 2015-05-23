@@ -106,7 +106,7 @@ bool CloseInputDevice(InputDevice *const device)
 	return close(device->File) == 0;
 }
 
-bool WriteAxis(InputDevice *const device, unsigned short int axis, int value) {
+bool WriteAxis(InputDevice *const device, unsigned short int axis, DigitalAxisValue value) {
     struct input_event event;
     memset(&event, 0, sizeof(event));
 

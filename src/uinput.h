@@ -89,6 +89,11 @@
 
 DECLARE_ENUM(InputKey, ENUM_INPUT_KEYS)
 
+typedef enum {
+    DIGITAL_AXIS_HIGH = 0,
+    DIGITAL_AXIS_ORIGIN = 2,
+    DIGITAL_AXIS_LOW = 4
+} DigitalAxisValue;
 
 typedef enum {
     INPUT_GAMEPAD,
@@ -103,5 +108,5 @@ typedef struct {
 bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device);
 bool CloseInputDevice(InputDevice *const device);
 bool WriteKey(InputDevice *const device, unsigned short int key, bool keyPressed);
-bool WriteAxis(InputDevice *const device, unsigned short int axis, int value);
+bool WriteAxis(InputDevice *const device, unsigned short int axis, DigitalAxisValue value);
 bool WriteSync(InputDevice *const device);
