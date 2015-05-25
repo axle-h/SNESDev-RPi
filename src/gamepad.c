@@ -32,9 +32,6 @@
 #include "gamepad.h"
 #include "GPIO.h"
 
-// It's impossible to press up and down at the same time
-#define NOT_CONNECTED_MASK (GAMEPAD_BUTTON_UP | GAMEPAD_BUTTON_DOWN)
-
 #define SNES_CLOCK 12
 #define NES_CLOCK 8
 
@@ -64,7 +61,7 @@ bool OpenGamepad(Gamepad *const gamepad) {
 	gamepad->State = 0;
     CheckGamepadState(gamepad);
 
-    return GpioOpen(gamepad->DataGpio, GPIO_INPUT);
+    return GpioOpen(gamepad->DataGpio, GPIO_INPUT_HIGH);
 }
 
 void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
@@ -87,47 +84,43 @@ void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
 			gamepad = &gamepads[i];
 
             // SNES sets gpio low when button pressed.
+            // Must have a pull-up resistor or we'll get all buttons pressed when controller disconnected.
 			if (GpioRead(gamepad->DataGpio) == GPIO_LOW) {
                 gamepad->State |= (1 << clock);
 			}
 		}
 
-        // Shift the shift register
+        // Pulse the clock to shift the register
 		GpioPulseLow(config->ClockGpio, 6, 6);
 	}
 }
 
 bool CheckGamepadState(Gamepad *const gamepad) {
-    // set to 0 if the controller is not connected
-    if ((gamepad->State & NOT_CONNECTED_MASK) == NOT_CONNECTED_MASK) {
-        gamepad->State = 0;
-    }
-
     if(gamepad->LastState == gamepad->State) {
         return false;
     }
 
-    gamepad->B = (gamepad->State & GAMEPAD_BUTTON_B) > 0;
-    gamepad->Y = (gamepad->State & GAMEPAD_BUTTON_Y) > 0;
-    gamepad->Select = (gamepad->State & GAMEPAD_BUTTON_SELECT) > 0;
-    gamepad->Start = (gamepad->State & GAMEPAD_BUTTON_START) > 0;
+    gamepad->B = (gamepad->State & GAMEPAD_BUTTON_B) != 0;
+    gamepad->Y = (gamepad->State & GAMEPAD_BUTTON_Y) != 0;
+    gamepad->Select = (gamepad->State & GAMEPAD_BUTTON_SELECT) != 0;
+    gamepad->Start = (gamepad->State & GAMEPAD_BUTTON_START) != 0;
 
-    gamepad->YAxis = (gamepad->State & GAMEPAD_BUTTON_UP) > 0
+    gamepad->YAxis = (gamepad->State & GAMEPAD_BUTTON_UP) != 0
                      ? DIGITAL_AXIS_HIGH
-                     : (gamepad->State & GAMEPAD_BUTTON_DOWN) > 0
+                     : (gamepad->State & GAMEPAD_BUTTON_DOWN) != 0
                        ? DIGITAL_AXIS_LOW
                        : DIGITAL_AXIS_ORIGIN;
 
-    gamepad->XAxis = (gamepad->State & GAMEPAD_BUTTON_LEFT) > 0
+    gamepad->XAxis = (gamepad->State & GAMEPAD_BUTTON_LEFT) != 0
                      ? DIGITAL_AXIS_HIGH
-                     : (gamepad->State & GAMEPAD_BUTTON_RIGHT) > 0
+                     : (gamepad->State & GAMEPAD_BUTTON_RIGHT) != 0
                        ? DIGITAL_AXIS_LOW
                        : DIGITAL_AXIS_ORIGIN;
 
-    gamepad->A = (gamepad->State & GAMEPAD_BUTTON_A) > 0;
-    gamepad->X = (gamepad->State & GAMEPAD_BUTTON_X) > 0;
-    gamepad->L = (gamepad->State & GAMEPAD_BUTTON_L) > 0;
-    gamepad->R = (gamepad->State & GAMEPAD_BUTTON_R) > 0;
+    gamepad->A = (gamepad->State & GAMEPAD_BUTTON_A) != 0;
+    gamepad->X = (gamepad->State & GAMEPAD_BUTTON_X) != 0;
+    gamepad->L = (gamepad->State & GAMEPAD_BUTTON_L) != 0;
+    gamepad->R = (gamepad->State & GAMEPAD_BUTTON_R) != 0;
 
     return true;
 }
