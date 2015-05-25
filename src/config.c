@@ -104,7 +104,11 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
     cfg_t *gamepadsSection = cfg_getsec(cfg, CFG_GAMEPADS);
     gamepadsConfig->ClockGpio = (uint8_t) cfg_getint(gamepadsSection, CFG_CLOCK_GPIO);
     gamepadsConfig->LatchGpio = (uint8_t) cfg_getint(gamepadsSection, CFG_LATCH_GPIO);
-    gamepadsConfig->PollFrequency = (unsigned int) cfg_getint(gamepadsSection, CFG_POLL_FREQ);
+
+    long pollFrequency = cfg_getint(gamepadsSection, CFG_POLL_FREQ);
+    if(pollFrequency > 0) {
+        gamepadsConfig->PollFrequency = (unsigned int)(1000 / (double)pollFrequency);
+    }
     gamepadsConfig->Type = (GamepadType)cfg_getint(gamepadsSection, CFG_GAMEPAD_TYPE);
     unsigned int numberOfGamepads = cfg_size(gamepadsSection, CFG_GAMEPAD);
 
@@ -131,7 +135,10 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
     // Parse buttons section.
     ButtonsConfig *buttonsConfig = &config->Buttons;
     cfg_t *buttonsSection = cfg_getsec(cfg, CFG_BUTTONS);
-    buttonsConfig->PollFrequency = (unsigned int) cfg_getint(buttonsSection, CFG_POLL_FREQ);
+    pollFrequency = cfg_getint(buttonsSection, CFG_POLL_FREQ);
+    if(pollFrequency > 0) {
+        buttonsConfig->PollFrequency = (unsigned int) (1000 / (double)pollFrequency);
+    }
     unsigned int numberOfButtons = cfg_size(buttonsSection, CFG_BUTTON);
 
     // Parse buttons

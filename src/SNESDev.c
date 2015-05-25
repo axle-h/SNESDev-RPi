@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
 
     bool runButtonFrame = config.Buttons.Total > 0 && config.Buttons.PollFrequency > 0;
     const unsigned int buttonFrameDelay = runButtonFrame
-                    ? (config.Gamepads.PollFrequency + config.Buttons.PollFrequency - 1) / config.Buttons.PollFrequency
+                    ? (config.Gamepads.PollFrequency + config.Buttons.PollFrequency - 1) / config.Gamepads.PollFrequency
                     : 0;
 
     unsigned int frameDelayCount = 0;
