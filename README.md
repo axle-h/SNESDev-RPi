@@ -1,26 +1,35 @@
-SNESDev-RPi
-===========
+# SNESDev-RPi
 
-SNESDev is a user-space driver for the RetroPie GPIO Adapter for the Raspberry Pi. It implements two (S)NES game controllers and a virtual keyboard for up to two (S)NES controllers and a button that are connected to the GPIO pins of the Raspberry Pivia the RetroPie GPIO Adapter (http://blog.petrockblock.com/2012/10/21/the-retropie-gpio-adapter/). 
+SNESDev is a user-space driver for the Raspberry Pi.
+It implements up to two (S)NES game controllers as HID gamepads and a single keyboard for as many buttons as you like connected over GPIO. 
 
-Installation
-------------
+## Installation
+### Dependencies
 
-Manual installation:
-
-First of all, make sure that Git is installed:
-
+Setup build system and get libconfuse, which is used for parsing the config file.
 ```shell
 sudo apt-get update
 sudo apt-get install -y build-essential git cmake libconfuse-dev
 ```
 
-
-SNESDev is downloaded and installed with
-
+Build and install Raspberry Pi GPIO library.
 ```shell
-cd
-git clone git://github.com/axle-h/SNESDev-RPi.git
+mkdir ~/src
+cd ~/src
+wget http://www.airspayce.com/mikem/bcm2835/bcm2835-1.44.tar.gz
+tar -xvf bcm2835-1.44.tar.gz
+cd bcm2835-1.44
+./configure
+make
+sudo make check
+sudo make install
+```
+
+### Build SNESDev
+```shell
+mkdir ~/src
+cd ~/src
+git clone https://github.com/axle-h/SNESDev-RPi.git 
 cd SNESDev-RPi
 mkdir build && cd build
 cmake -D CMAKE_BUILD_TYPE=Release ../
@@ -28,12 +37,10 @@ make
 sudo make install
 ```
 
-The lines above build and install two needed libraries and SNESDev-Rpi. The sudo-command is needed for the installation of the libraries.
+This will build & install SNESDev as a service and start it.
 
-Running
--------
-
-In order to run SNESDev mae sure that the uinput module is loaded. You can check this with
+## Running
+In order to run SNESDev make sure that the uinput module is loaded. You can check this with
 
 ```shell
 lsmod
@@ -45,35 +52,30 @@ The module is loaded with
 sudo modprobe uinput
 ```
 
-If you want to have the uinput module automatically loaded, you can add "uinput" to the file 
-/etc/modules.
+If you want to have the uinput module automatically loaded, you can add "uinput" to the file ```/etc/modules```.
 
-SNESDev has to be run as background process with
+SNESDev is run as a service. To check whether it is running:
+
+```shell
+sudo service SNESDev status
+```
+
+You can start SNESDev with
 
 ```shell
 sudo service SNESDev start
 ```
 
-In order to access the uinput device SNESDev has to be run as root. This is (obviously) not so nice and is currently an issue. If you have a solution or suggestion for that, feel free to submit a pull request or send me a mail!
+## Configuration
 
-Configuring SNESDev-Rpi
------------------------
-
-SNESDev-Rpi is configured with the help of the configuration file ```/etc/gpio/snesdev.cfg```.
+SNESDev is configured with the configuration file ```/etc/gpio/snesdev.cfg```.
 
 
+## Uninstalling
 
-Uninstalling SNESDev service
-----------------------------
-
-You can uninstall the SNESSDev-Rpi service with the following command:
+You can uninstall the SNESDev service with the following command:
 
 ```shell
+cd ~/src/SNESDev-RPi/build
 sudo make uninstall
 ```
- 
-
-Have fun!
-
-
-Raspberry Pi is a trademark of the Raspberry Pi Foundation.
