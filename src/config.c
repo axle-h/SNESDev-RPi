@@ -122,7 +122,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
             continue;
         }
 
-        GamepadConfig *gamepadConfig = &gamepadsConfig->Gamepads[gamepadsConfig->Total];
+        GamepadConfig *gamepadConfig = gamepadsConfig->Gamepads + gamepadsConfig->Total;
         gamepadConfig->Id = (unsigned int) atoi(cfg_title(gamepadSection));
         gamepadConfig->DataGpio = (uint8_t) cfg_getint(gamepadSection, CFG_GPIO);
         gamepadsConfig->Total++;
@@ -151,7 +151,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
             continue;
         }
 
-        ButtonConfig *buttonConfig = &buttonsConfig->Buttons[buttonsConfig->Total];
+        ButtonConfig *buttonConfig = buttonsConfig->Buttons + buttonsConfig->Total;
         buttonConfig->Id = (unsigned int) atoi(cfg_title(buttonSection));
         buttonConfig->Key = (InputKey) cfg_getint(buttonSection, CFG_KEY);
         buttonConfig->DataGpio = (uint8_t) cfg_getint(buttonSection, CFG_GPIO);
@@ -199,7 +199,7 @@ static bool ValidateConfig(SNESDevConfig *const config) {
     }
 
     for(unsigned int i = 0; i < config->Gamepads.Total; i++) {
-        GamepadConfig *gamepad = &config->Gamepads.Gamepads[i];
+        GamepadConfig *gamepad = config->Gamepads.Gamepads + i;
         if(gamepad == NULL || gamepad->DataGpio == 0 || gamepad->Id == 0 || gamepad->Id > MAX_GAMEPADS) {
             fprintf(stderr, "Bad gamepad config\n");
             return false;
@@ -211,7 +211,7 @@ static bool ValidateConfig(SNESDevConfig *const config) {
     }
 
     for(unsigned int i = 0; i < config->Buttons.Total; i++) {
-        ButtonConfig *button = &config->Buttons.Buttons[i];
+        ButtonConfig *button = config->Buttons.Buttons + i;
         if(button == NULL || button->DataGpio == 0 || button->Id == 0) {
             fprintf(stderr, "Bad button config\n");
             return false;

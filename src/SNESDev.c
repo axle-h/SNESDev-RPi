@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     if(!TryGetSNESDevConfig(CONFIG_FILE, argc, argv, &config)) {
         return EXIT_FAILURE;
     }
-    config.DebugEnabled = true;
+
     InitLog(&config);
 
     bcm2835_set_debug((uint8_t) config.DebugEnabled);
@@ -121,7 +121,7 @@ void InitLog(SNESDevConfig *const config) {
     openlog(LOG_IDENTITY, LOG_PID, config->RunAsDaemon ? LOG_DAEMON : LOG_USER);
 
     for(unsigned int i = 0; i < config->Gamepads.Total; i++) {
-        GamepadConfig *gamepad = &config->Gamepads.Gamepads[i];
+        GamepadConfig *gamepad = config->Gamepads.Gamepads + i;
 
         syslog(LOG_INFO, "Gamepad%u: { Type: %s, PollFrequency: %u, Gpio: { Data: %u, Clock: %u, Latch: %u } }",
                gamepad->Id, GetGamepadTypeString(config->Gamepads.Type), config->Gamepads.PollFrequency,
@@ -129,7 +129,7 @@ void InitLog(SNESDevConfig *const config) {
     }
 
     for(unsigned int i = 0; i < config->Buttons.Total; i++) {
-        ButtonConfig *button = &config->Buttons.Buttons[i];
+        ButtonConfig *button = config->Buttons.Buttons + i;
 
         syslog(LOG_INFO, "Button%u: { Key: %s, PollFrequency: %u, Gpio: { Data: %u } }",
                button->Id, GetInputKeyString(button->Key), config->Buttons.PollFrequency, button->DataGpio);
@@ -138,7 +138,7 @@ void InitLog(SNESDevConfig *const config) {
 
 void ConfigureGamepads(GamepadsConfig *const config, Gamepad *const gamepads, InputDevice *const gamepadDevices) {
     for(unsigned int i = 0; i < config->Total; i++) {
-        GamepadConfig *gamepadConfig = &config->Gamepads[i];
+        GamepadConfig *gamepadConfig = config->Gamepads + i;
 
         // Open uinput gamepad device.
         InputDevice *gamepadDevice = &gamepadDevices[i];
@@ -163,7 +163,7 @@ void ConfigureButtons(ButtonsConfig *const config, Button *const buttons, InputD
     }
 
     for(unsigned int i = 0; i < config->Total; i++) {
-        ButtonConfig *buttonConfig = &config->Buttons[i];
+        ButtonConfig *buttonConfig = config->Buttons + i;
 
         // Open button GPIO interface.
         Button *button = &buttons[i];
@@ -181,7 +181,8 @@ void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, 
     ReadGamepads(&gamepads[0], config);
 
     for(unsigned int i = 0; i < config->Total; i++) {
-        Gamepad *gamepad = &gamepads[i];
+        Gamepad *gamepad = gamepads + i;
+
         if(!CheckGamepadState(gamepad)) {
             continue;
         }
@@ -203,7 +204,7 @@ void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, 
 
 void ProcessButtonFrame(Button *const buttons, InputDevice *const keyboardDevice, unsigned int numberOfEnabledButtons) {
     for(unsigned int i = 0; i < numberOfEnabledButtons; i++) {
-        Button *button = &buttons[i];
+        Button *button = buttons + i;
 
         ReadButton(button);
 

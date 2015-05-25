@@ -71,7 +71,7 @@ void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
 
     Gamepad *gamepad;
     for(unsigned int i = 0; i < config->Total; i++) {
-        gamepad = &gamepads[i];
+        gamepad = gamepads + i;
         gamepad->LastState = gamepad->State;
         gamepad->State = 0;
     }
@@ -81,7 +81,7 @@ void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
 
 	for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
 		for(unsigned int i = 0; i < config->Total; i++) {
-			gamepad = &gamepads[i];
+			gamepad = gamepads + i;
 
             // SNES sets gpio low when button pressed.
             // Must have a pull-up resistor or we'll get all buttons pressed when controller disconnected.
