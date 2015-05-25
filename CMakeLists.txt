@@ -10,8 +10,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -pedantic -std=gnu99")
 # Source files
 file(GLOB_RECURSE SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/*.h" "${PROJECT_SOURCE_DIR}/src/*.c")
 
-find_package(Confuse REQUIRED)
 find_package(BCM2835 REQUIRED)
+find_package(Confuse REQUIRED)
 
 include_directories(include
 	${CONFUSE_INCLUDE_DIR}
@@ -19,8 +19,8 @@ include_directories(include
 
 add_executable(SNESDev ${SOURCE_FILES})
 target_link_libraries(SNESDev
-	${CONFUSE_LIBRARIES}
-	${BCM2835_LIBRARIES})
+	${CONFUSE_STATIC_LIBRARIES}
+	${BCM2835_STATIC_LIBRARIES})
 
 # install target
 install(TARGETS SNESDev

@@ -4,7 +4,7 @@ find_path(CONFUSE_INCLUDE_DIR confuse.h
     /usr/local/include
     /usr/include)
 
-find_library(CONFUSE_LIBRARIES NAMES confuse
+find_library(CONFUSE_STATIC_LIBRARIES libconfuse.a
     PATHS
     "$ENV{CONFUSE}/lib"
     /usr/local/lib
@@ -12,10 +12,10 @@ find_library(CONFUSE_LIBRARIES NAMES confuse
 
 SET(CONFUSE_FOUND 0)
 IF(CONFUSE_INCLUDE_DIR)
-    IF(CONFUSE_LIBRARIES)
+    IF(CONFUSE_STATIC_LIBRARIES)
         SET(CONFUSE_FOUND 1)
         MESSAGE(STATUS "Found Confuse")
-    ENDIF(CONFUSE_LIBRARIES)
-ENDIF(CONFUSE_INCLUDE_DIR)
+    ENDIF()
+ENDIF()
 
-mark_as_advanced(CONFUSE_INCLUDE_DIRS CONFUSE_LIBRARIES)
+mark_as_advanced(CONFUSE_INCLUDE_DIRS CONFUSE_STATIC_LIBRARIES)
