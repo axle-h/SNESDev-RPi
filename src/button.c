@@ -28,7 +28,7 @@
 #include "button.h"
 #include "GPIO.h"
 
-bool OpenButton(Button *button) {
+bool OpenButton(Button *const button) {
     button->State = BUTTON_STATE_IDLE;
 	return GpioOpen(button->Gpio, GPIO_INPUT);
 }

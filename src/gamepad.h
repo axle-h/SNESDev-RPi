@@ -31,6 +31,7 @@
 #include "enum.h"
 #include "uinput.h"
 
+#define MAX_GAMEPADS 2
 
 #define ENUM_GAMEPAD_BUTTON(XX) \
     XX(GAMEPAD_BUTTON_B, =0x0001, B) \
@@ -46,12 +47,28 @@
     XX(GAMEPAD_BUTTON_L, =0x0400, L) \
     XX(GAMEPAD_BUTTON_R, =0x0800, R) \
 
+// Gamepad & clock pulses
 #define ENUM_GAMEPAD_TYPE(XX) \
     XX(GAMEPAD_NES, =1, nes) \
     XX(GAMEPAD_SNES, =2, snes)
 
 DECLARE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE)
 DECLARE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON)
+
+typedef struct {
+    unsigned int Id;
+    uint8_t DataGpio;
+} GamepadConfig;
+
+typedef struct {
+    unsigned int Total;
+    GamepadConfig Gamepads[MAX_GAMEPADS];
+    GamepadType Type;
+    unsigned int ClockPulses;
+    uint8_t ClockGpio;
+    uint8_t LatchGpio;
+    unsigned int PollFrequency;
+} GamepadsConfig;
 
 typedef struct {
 	uint8_t DataGpio;
@@ -69,16 +86,8 @@ typedef struct {
     bool R;
 } Gamepad;
 
-typedef struct {
-	uint8_t ClockGpio;
-	uint8_t LatchGpio;
-    unsigned int NumberOfGamepads;
-    GamepadType Type;
-    unsigned int ClockPulses;
-} GamepadControlPins;
-
-bool OpenGamepadControlPins(GamepadControlPins *const config);
-bool OpenGamepad(Gamepad *const gamepad);
-void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const config);
-bool CheckGamepadState(Gamepad *const gamepad);
+bool OpenGamepadControlPins(GamepadsConfig *config);
+bool OpenGamepad(Gamepad *gamepad);
+void ReadGamepads(Gamepad *gamepads, GamepadsConfig *config);
+bool CheckGamepadState(Gamepad *gamepad);
 

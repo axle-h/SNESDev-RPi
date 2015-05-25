@@ -31,6 +31,20 @@
 #include <stdbool.h>
 #include "uinput.h"
 
+#define MAX_BUTTONS 5
+
+typedef struct {
+    unsigned int Id;
+    InputKey Key;
+    uint8_t DataGpio;
+} ButtonConfig;
+
+typedef struct {
+    unsigned int Total;
+    ButtonConfig Buttons[MAX_BUTTONS];
+    unsigned int PollFrequency;
+} ButtonsConfig;
+
 typedef enum {
     BUTTON_STATE_IDLE,
     BUTTON_STATE_PRESSED,
@@ -44,5 +58,5 @@ typedef struct {
 } Button;
 
 bool OpenButton(Button *button);
-void ReadButton(Button *const button);
+void ReadButton(Button *button);
 

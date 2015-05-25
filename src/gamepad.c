@@ -32,18 +32,16 @@
 #include "gamepad.h"
 #include "GPIO.h"
 
-#define SNES_CLOCK 12
-#define NES_CLOCK 8
-
 // It's impossible to press up and down at the same time
 #define NOT_CONNECTED_MASK (GAMEPAD_BUTTON_UP | GAMEPAD_BUTTON_DOWN)
+
+#define SNES_CLOCK 12
+#define NES_CLOCK 8
 
 DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
 DEFINE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON, unsigned int)
 
-static inline void SetButtonStates(Gamepad *const gamepad);
-
-bool OpenGamepadControlPins(GamepadControlPins *const config) {
+bool OpenGamepadControlPins(GamepadsConfig *const config) {
     bool success = GpioOpen(config->LatchGpio, GPIO_OUTPUT) && GpioOpen(config->ClockGpio, GPIO_OUTPUT);
     GpioWrite(config->ClockGpio, GPIO_HIGH);
 
@@ -69,13 +67,13 @@ bool OpenGamepad(Gamepad *const gamepad) {
     return GpioOpen(gamepad->DataGpio, GPIO_INPUT);
 }
 
-void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const config) {
-    if(config->NumberOfGamepads == 0) {
+void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
+    if(config->Total == 0) {
         return;
     }
 
     Gamepad *gamepad;
-    for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
+    for(unsigned int i = 0; i < config->Total; i++) {
         gamepad = &gamepads[i];
         gamepad->LastState = gamepad->State;
         gamepad->State = 0;
@@ -85,7 +83,7 @@ void ReadGamepads(Gamepad *const gamepads, const GamepadControlPins *const confi
     GpioPulseHigh(config->LatchGpio, 12, 6);
 
 	for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
-		for(unsigned int i = 0; i < config->NumberOfGamepads; i++) {
+		for(unsigned int i = 0; i < config->Total; i++) {
 			gamepad = &gamepads[i];
 
             // SNES sets gpio low when button pressed.

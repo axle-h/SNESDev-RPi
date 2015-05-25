@@ -38,10 +38,16 @@ bool GpioOpen(uint8_t pin, GpioDirection direction)
             bcm2835_gpio_write(pin, LOW);
 			return true;
 		case GPIO_INPUT:
-			// Output needs a pull down for when controller not connected.
 			bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
-			bcm2835_gpio_set_pud(pin, BCM2835_GPIO_PUD_DOWN);
 			return true;
+		case GPIO_INPUT_LOW:
+            bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
+            bcm2835_gpio_set_pud(pin, BCM2835_GPIO_PUD_DOWN);
+            return true;
+		case GPIO_INPUT_HIGH:
+            bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
+            bcm2835_gpio_set_pud(pin, BCM2835_GPIO_PUD_UP);
+            return true;
 	}
 
 	return false;

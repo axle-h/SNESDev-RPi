@@ -102,11 +102,11 @@ typedef enum {
 
 typedef struct {
 	int File;
-    const char *Name;
+    char Name[20];
 } InputDevice;
 
-bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device);
-bool CloseInputDevice(InputDevice *const device);
-bool WriteKey(InputDevice *const device, unsigned short int key, bool keyPressed);
-bool WriteAxis(InputDevice *const device, unsigned short int axis, DigitalAxisValue value);
-bool WriteSync(InputDevice *const device);
+bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *device);
+bool CloseInputDevice(InputDevice *device);
+bool WriteKey(InputDevice *device, unsigned short int key, bool keyPressed);
+bool WriteAxis(InputDevice *device, unsigned short int axis, DigitalAxisValue value);
+bool WriteSync(InputDevice *device);
