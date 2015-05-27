@@ -16,7 +16,7 @@ void StartDaemon(const char *pidFile) {
     }
 
     if (lockf(lfp, F_TLOCK, 0) < 0) {
-        // Can not lock
+        // Can not lock, process already running
         exit(EXIT_SUCCESS);
     }
 

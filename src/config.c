@@ -47,6 +47,7 @@ static error_t ParseOption(int key, char *arg, struct argp_state *state);
 static bool ValidateConfig(SNESDevConfig *config);
 static int VerifyGamepadType(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result);
 static int VerifyInputKey(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *result);
+static inline unsigned int SafeToUnsigned(long x);
 
 bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNESDevConfig *const config) {
     const Arguments arguments = ParseArguments(argc, argv);
@@ -104,10 +105,10 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
     // Parse gamepad section
     GamepadsConfig *gamepadsConfig = &config->Gamepads;
     cfg_t *gamepadsSection = cfg_getsec(cfg, CFG_GAMEPADS);
-    gamepadsConfig->ClockGpio = (uint8_t) cfg_getint(gamepadsSection, CFG_CLOCK_GPIO);
-    gamepadsConfig->LatchGpio = (uint8_t) cfg_getint(gamepadsSection, CFG_LATCH_GPIO);
+    gamepadsConfig->ClockGpio = (uint8_t) SafeToUnsigned(cfg_getint(gamepadsSection, CFG_CLOCK_GPIO));
+    gamepadsConfig->LatchGpio = (uint8_t) SafeToUnsigned(cfg_getint(gamepadsSection, CFG_LATCH_GPIO));
 
-    long pollFrequency = cfg_getint(gamepadsSection, CFG_POLL_FREQ);
+    unsigned int pollFrequency = SafeToUnsigned(cfg_getint(gamepadsSection, CFG_POLL_FREQ));
     if(pollFrequency > 0) {
         gamepadsConfig->PollFrequency = (unsigned int)(1000 / (double)pollFrequency);
     }
@@ -126,7 +127,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
 
         GamepadConfig *gamepadConfig = gamepadsConfig->Gamepads + gamepadsConfig->Total;
         gamepadConfig->Id = (unsigned int) atoi(cfg_title(gamepadSection));
-        gamepadConfig->DataGpio = (uint8_t) cfg_getint(gamepadSection, CFG_GPIO);
+        gamepadConfig->DataGpio = (uint8_t) SafeToUnsigned(cfg_getint(gamepadSection, CFG_GPIO));
         gamepadsConfig->Total++;
 
         if(gamepadsConfig->Total > MAX_GAMEPADS) {
@@ -137,7 +138,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
     // Parse buttons section.
     ButtonsConfig *buttonsConfig = &config->Buttons;
     cfg_t *buttonsSection = cfg_getsec(cfg, CFG_BUTTONS);
-    pollFrequency = cfg_getint(buttonsSection, CFG_POLL_FREQ);
+    pollFrequency = SafeToUnsigned(cfg_getint(buttonsSection, CFG_POLL_FREQ));
     if(pollFrequency > 0) {
         buttonsConfig->PollFrequency = (unsigned int) (1000 / (double)pollFrequency);
     }
@@ -156,7 +157,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
         ButtonConfig *buttonConfig = buttonsConfig->Buttons + buttonsConfig->Total;
         buttonConfig->Id = (unsigned int) atoi(cfg_title(buttonSection));
         buttonConfig->Key = (InputKey) cfg_getint(buttonSection, CFG_KEY);
-        buttonConfig->DataGpio = (uint8_t) cfg_getint(buttonSection, CFG_GPIO);
+        buttonConfig->DataGpio = (uint8_t) SafeToUnsigned(cfg_getint(buttonSection, CFG_GPIO));
         buttonsConfig->Total++;
 
         if(buttonsConfig->Total > MAX_BUTTONS) {
@@ -214,7 +215,7 @@ static bool ValidateConfig(SNESDevConfig *const config) {
 
     for(unsigned int i = 0; i < config->Buttons.Total; i++) {
         ButtonConfig *button = config->Buttons.Buttons + i;
-        if(button == NULL || button->DataGpio == 0 || button->Id == 0) {
+        if(button == NULL || button->DataGpio == 0 || button->Id == 0 || button->Key <= 0) {
             fprintf(stderr, "Bad button config\n");
             return false;
         }
@@ -280,4 +281,8 @@ static error_t ParseOption(int key, char *arg, struct argp_state *state) {
             return ARGP_ERR_UNKNOWN;
     }
     return 0;
+}
+
+static inline unsigned int SafeToUnsigned(long x) {
+    return x < 0 ? 0 : (unsigned int)x;
 }
