@@ -94,7 +94,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
     }
 
     // Initialize from arguments.
-    memset(config, 0, sizeof(&config));
+    memset(config, 0, sizeof(SNESDevConfig));
     config->RunAsDaemon = !arguments.DebugEnabled && arguments.RunAsDaemon;
     config->DebugEnabled = arguments.DebugEnabled;
     strcpy(config->PidFile, arguments.PidFile == NULL ? "" : arguments.PidFile);
