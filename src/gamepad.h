@@ -30,8 +30,8 @@
 #include <stdbool.h>
 #include "enum.h"
 #include "uinput.h"
+#include "CMakeConfig.h"
 
-#define MAX_GAMEPADS 2
 
 #define ENUM_GAMEPAD_BUTTON(XX) \
     XX(GAMEPAD_BUTTON_B, =0x0001, B) \
@@ -62,7 +62,7 @@ typedef struct {
 
 typedef struct {
     unsigned int Total;
-    GamepadConfig Gamepads[MAX_GAMEPADS];
+    GamepadConfig Gamepads[SNESDEV_MAX_GAMEPADS];
     GamepadType Type;
     unsigned int ClockPulses;
     uint8_t ClockGpio;

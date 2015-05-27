@@ -5,6 +5,7 @@
 #include <argp.h>
 #include <string.h>
 #include "config.h"
+#include "CMakeConfig.h"
 
 // Arguments
 #define OPT_USAGE ""
@@ -130,7 +131,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
         gamepadConfig->DataGpio = (uint8_t) SafeToUnsigned(cfg_getint(gamepadSection, CFG_GPIO));
         gamepadsConfig->Total++;
 
-        if(gamepadsConfig->Total > MAX_GAMEPADS) {
+        if(gamepadsConfig->Total > SNESDEV_MAX_GAMEPADS) {
             break;
         }
     }
@@ -160,7 +161,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
         buttonConfig->DataGpio = (uint8_t) SafeToUnsigned(cfg_getint(buttonSection, CFG_GPIO));
         buttonsConfig->Total++;
 
-        if(buttonsConfig->Total > MAX_BUTTONS) {
+        if(buttonsConfig->Total > SNESDEV_MAX_BUTTONS) {
             break;
         }
     }
@@ -203,7 +204,7 @@ static bool ValidateConfig(SNESDevConfig *const config) {
 
     for(unsigned int i = 0; i < config->Gamepads.Total; i++) {
         GamepadConfig *gamepad = config->Gamepads.Gamepads + i;
-        if(gamepad == NULL || gamepad->DataGpio == 0 || gamepad->Id == 0 || gamepad->Id > MAX_GAMEPADS) {
+        if(gamepad == NULL || gamepad->DataGpio == 0 || gamepad->Id == 0 || gamepad->Id > SNESDEV_MAX_GAMEPADS) {
             fprintf(stderr, "Bad gamepad config\n");
             return false;
         }

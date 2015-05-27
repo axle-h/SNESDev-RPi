@@ -30,8 +30,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "uinput.h"
-
-#define MAX_BUTTONS 5
+#include "CMakeConfig.h"
 
 typedef struct {
     unsigned int Id;
@@ -41,7 +40,7 @@ typedef struct {
 
 typedef struct {
     unsigned int Total;
-    ButtonConfig Buttons[MAX_BUTTONS];
+    ButtonConfig Buttons[SNESDEV_MAX_BUTTONS];
     unsigned int PollFrequency;
 } ButtonsConfig;
 

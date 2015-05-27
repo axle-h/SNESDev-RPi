@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(SNESDev C)
 
+include(${PROJECT_SOURCE_DIR}/cmake/CMakeConfig.cmake)
+
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 configure_file (${PROJECT_SOURCE_DIR}/scripts/SNESDev.in ${PROJECT_BINARY_DIR}/scripts/SNESDev)

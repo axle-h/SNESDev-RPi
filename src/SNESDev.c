@@ -35,10 +35,12 @@
 
 #include "button.h"
 #include "gamepad.h"
-#include "uinput.h"
+#include "CMakeConfig.h"
 
 #include "config.h"
 #include "daemon.h"
+
+
 
 #define KEYBOARD_DEVICE_NAME "SNESDev Keyboard"
 #define GAMEPAD_DEVICE_NAME "SNESDev Gamepad"
