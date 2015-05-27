@@ -97,7 +97,9 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
     memset(config, 0, sizeof(SNESDevConfig));
     config->RunAsDaemon = !arguments.DebugEnabled && arguments.RunAsDaemon;
     config->DebugEnabled = arguments.DebugEnabled;
-    strcpy(config->PidFile, arguments.PidFile == NULL ? "" : arguments.PidFile);
+
+    // PidFile came from argv so will be way down teh stack :-)
+    config->PidFile = arguments.PidFile;
 
     // Parse gamepad section
     GamepadsConfig *gamepadsConfig = &config->Gamepads;

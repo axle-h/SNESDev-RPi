@@ -9,7 +9,7 @@
 typedef struct {
     bool RunAsDaemon;
     bool DebugEnabled;
-    char PidFile[50];
+    char *PidFile;
 
     GamepadsConfig Gamepads;
     ButtonsConfig Buttons;

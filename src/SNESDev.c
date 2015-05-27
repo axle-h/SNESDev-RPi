@@ -63,8 +63,6 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
-    config.DebugEnabled = true;
-
     InitLog(&config);
 
     bcm2835_set_debug((uint8_t) config.DebugEnabled);
