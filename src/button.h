@@ -30,7 +30,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "uinput.h"
-#include "CMakeConfig.h"
+#include "SNESDevConfig.h"
 
 typedef struct {
     unsigned int Id;

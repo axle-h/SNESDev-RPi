@@ -35,18 +35,10 @@
 
 #include "button.h"
 #include "gamepad.h"
-#include "CMakeConfig.h"
 
 #include "config.h"
 #include "daemon.h"
 
-
-
-#define KEYBOARD_DEVICE_NAME "SNESDev Keyboard"
-#define GAMEPAD_DEVICE_NAME "SNESDev Gamepad"
-
-#define LOG_IDENTITY "SNESDev"
-#define CONFIG_FILE "/etc/gpio/snesdev.cfg"
 
 bool running;
 

@@ -5,7 +5,6 @@
 #include <argp.h>
 #include <string.h>
 #include "config.h"
-#include "CMakeConfig.h"
 
 // Arguments
 #define OPT_USAGE ""

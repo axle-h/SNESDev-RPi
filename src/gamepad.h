@@ -30,7 +30,7 @@
 #include <stdbool.h>
 #include "enum.h"
 #include "uinput.h"
-#include "CMakeConfig.h"
+#include "SNESDevConfig.h"
 
 
 #define ENUM_GAMEPAD_BUTTON(XX) \
