@@ -63,6 +63,8 @@ int main(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    config.DebugEnabled = true;
+
     InitLog(&config);
 
     bcm2835_set_debug((uint8_t) config.DebugEnabled);
@@ -150,6 +152,7 @@ void ConfigureGamepads(GamepadsConfig *const config, Gamepad *const gamepads, In
 
         // Open gamepad GPIO interface.
         Gamepad *gamepad = &gamepads[i];
+        memset(gamepad, 0, sizeof(Gamepad));
         gamepad->DataGpio = gamepadConfig->DataGpio;
         OpenGamepad(gamepad);
     }
@@ -167,6 +170,7 @@ void ConfigureButtons(ButtonsConfig *const config, Button *const buttons, InputD
 
         // Open button GPIO interface.
         Button *button = &buttons[i];
+        memset(button, 0, sizeof(Button));
         button->Gpio = buttonConfig->DataGpio;
         button->Key = buttonConfig->Key;
         OpenButton(button);

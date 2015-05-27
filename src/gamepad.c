@@ -55,19 +55,12 @@ bool OpenGamepadControlPins(GamepadsConfig *const config) {
 }
 
 bool OpenGamepad(Gamepad *const gamepad) {
-
-    // 0 out the states
-    gamepad->LastState = GAMEPAD_BUTTON_A;
-	gamepad->State = 0;
-    CheckGamepadState(gamepad);
-
+    gamepad->XAxis = DIGITAL_AXIS_ORIGIN;
+    gamepad->YAxis = DIGITAL_AXIS_ORIGIN;
     return GpioOpen(gamepad->DataGpio, GPIO_INPUT_HIGH);
 }
 
 void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
-    if(config->Total == 0) {
-        return;
-    }
 
     Gamepad *gamepad;
     for(unsigned int i = 0; i < config->Total; i++) {
