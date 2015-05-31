@@ -30,11 +30,11 @@
 
 bool OpenButton(Button *const button) {
     button->State = BUTTON_STATE_IDLE;
-	return GpioOpen(button->Gpio, GPIO_INPUT);
+	return GpioOpen(button->Gpio, GPIO_INPUT_HIGH);
 }
 
 void ReadButton(Button *const button) {
-	bool buttonPressed = GpioRead(button->Gpio) == GPIO_HIGH;
+	bool buttonPressed = GpioRead(button->Gpio) == GPIO_LOW;
     switch (button->State) {
         case BUTTON_STATE_IDLE:
             if (buttonPressed) {
