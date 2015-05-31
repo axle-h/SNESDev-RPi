@@ -34,7 +34,7 @@
 
 #define SNES_CLOCK 12
 #define NES_CLOCK 8
-#define NOISE_MASK 0xfff
+#define NOISE_MASK 0xf000
 
 DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
 DEFINE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON, unsigned int)
