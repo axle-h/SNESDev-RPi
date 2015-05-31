@@ -72,8 +72,6 @@ void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
     // Latch the shift register.
     GpioPulseHigh(config->LatchGpio, 12, 6);
 
-
-    GamepadsConfig *ptr = &config[0];
 	for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
 		for(unsigned int i = 0; i < config->Total; i++) {
 			gamepad = gamepads + i;
