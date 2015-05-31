@@ -59,7 +59,6 @@ int main(int argc, char *argv[]) {
 
     InitLog(&config);
 
-    config.DebugEnabled = true;
     bcm2835_set_debug((uint8_t) config.DebugEnabled);
 
 	if (!bcm2835_init()) {
