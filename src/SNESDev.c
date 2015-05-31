@@ -46,7 +46,7 @@ void InitLog(SNESDevConfig *config);
 void ConfigureGamepads(GamepadsConfig *config, Gamepad *gamepads, InputDevice *gamepadDevices);
 void ConfigureButtons(ButtonsConfig *config, Button *buttons, InputDevice *keyboardDevice);
 void ProcessGamepadFrame(GamepadsConfig *config, Gamepad *gamepads, InputDevice *gamepadDevices, bool verbose);
-void ProcessButtonFrame(Button *buttons, InputDevice *keyboardDevice, unsigned int numberOfEnabledButtons);
+void ProcessButtonFrame(Button *buttons, InputDevice *keyboardDevice, unsigned int numberOfEnabledButtons, bool verbose);
 void SetupSignals();
 void SignalHandler(int signal);
 
@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 
         if(runButtonFrame) {
             if (config.Buttons.Total > 0 && frameDelayCount == 0) {
-                ProcessButtonFrame(buttons, &keyboardDevice, config.Buttons.Total);
+                ProcessButtonFrame(buttons, &keyboardDevice, config.Buttons.Total, config.Verbose);
             }
 
             frameDelayCount++;
@@ -204,7 +204,7 @@ void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, 
     }
 }
 
-void ProcessButtonFrame(Button *const buttons, InputDevice *const keyboardDevice, unsigned int numberOfEnabledButtons) {
+void ProcessButtonFrame(Button *const buttons, InputDevice *const keyboardDevice, unsigned int numberOfEnabledButtons, bool verbose) {
     for(unsigned int i = 0; i < numberOfEnabledButtons; i++) {
         Button *button = buttons + i;
 
@@ -216,6 +216,9 @@ void ProcessButtonFrame(Button *const buttons, InputDevice *const keyboardDevice
             case BUTTON_STATE_PRESSED:
                 WriteKey(keyboardDevice, button->Key, true);
                 WriteSync(keyboardDevice);
+                if(verbose) {
+                    printf("Button pressed on Gpio: %u, triggerred key: %s\n", button->Gpio, GetInputKeyString(button->Key));
+                }
                 break;
             case BUTTON_STATE_RELEASED:
                 WriteKey(keyboardDevice, button->Key, false);
