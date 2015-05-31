@@ -34,7 +34,6 @@
 
 #define SNES_CLOCK 12
 #define NES_CLOCK 8
-#define NOISE_MASK 0xf000
 
 DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
 DEFINE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON, unsigned int)
@@ -120,7 +119,8 @@ bool CheckGamepadState(Gamepad *const gamepad) {
     gamepad->R = (gamepad->State & GAMEPAD_BUTTON_R) != 0;
 
     // Check that we don't have noise.
-    if(up && down || left && right || (gamepad->State & NOISE_MASK) != 0) {
+    if(up && down || left && right) {
+        gamepad->State = 0;
         return false;
     }
 
