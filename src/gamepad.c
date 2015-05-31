@@ -34,6 +34,7 @@
 
 #define SNES_CLOCK 12
 #define NES_CLOCK 8
+#define NOISE_MASK 0xfff
 
 DEFINE_ENUM(GamepadType, ENUM_GAMEPAD_TYPE, unsigned int)
 DEFINE_ENUM(GamepadButton, ENUM_GAMEPAD_BUTTON, unsigned int)
@@ -72,6 +73,8 @@ void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
     // Latch the shift register.
     GpioPulseHigh(config->LatchGpio, 12, 6);
 
+
+    GamepadsConfig *ptr = &config[0];
 	for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
 		for(unsigned int i = 0; i < config->Total; i++) {
 			gamepad = gamepads + i;
@@ -98,22 +101,28 @@ bool CheckGamepadState(Gamepad *const gamepad) {
     gamepad->Select = (gamepad->State & GAMEPAD_BUTTON_SELECT) != 0;
     gamepad->Start = (gamepad->State & GAMEPAD_BUTTON_START) != 0;
 
-    gamepad->YAxis = (gamepad->State & GAMEPAD_BUTTON_UP) != 0
-                     ? DIGITAL_AXIS_HIGH
-                     : (gamepad->State & GAMEPAD_BUTTON_DOWN) != 0
-                       ? DIGITAL_AXIS_LOW
-                       : DIGITAL_AXIS_ORIGIN;
+    bool up = (gamepad->State & GAMEPAD_BUTTON_UP) != 0;
+    bool down = (gamepad->State & GAMEPAD_BUTTON_DOWN) != 0;
+    bool left = (gamepad->State & GAMEPAD_BUTTON_LEFT) != 0;
+    bool right = (gamepad->State & GAMEPAD_BUTTON_RIGHT) != 0;
 
-    gamepad->XAxis = (gamepad->State & GAMEPAD_BUTTON_LEFT) != 0
-                     ? DIGITAL_AXIS_HIGH
-                     : (gamepad->State & GAMEPAD_BUTTON_RIGHT) != 0
-                       ? DIGITAL_AXIS_LOW
-                       : DIGITAL_AXIS_ORIGIN;
+    gamepad->YAxis = up ? DIGITAL_AXIS_HIGH
+                        : down ? DIGITAL_AXIS_LOW
+                        : DIGITAL_AXIS_ORIGIN;
+
+    gamepad->XAxis = left ? DIGITAL_AXIS_HIGH
+                        : right ? DIGITAL_AXIS_LOW
+                        : DIGITAL_AXIS_ORIGIN;
 
     gamepad->A = (gamepad->State & GAMEPAD_BUTTON_A) != 0;
     gamepad->X = (gamepad->State & GAMEPAD_BUTTON_X) != 0;
     gamepad->L = (gamepad->State & GAMEPAD_BUTTON_L) != 0;
     gamepad->R = (gamepad->State & GAMEPAD_BUTTON_R) != 0;
+
+    // Check that we don't have noise.
+    if(up && down || left && right || (gamepad->State & NOISE_MASK) != 0) {
+        return false;
+    }
 
     return true;
 }

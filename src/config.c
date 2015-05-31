@@ -10,16 +10,19 @@
 #define OPT_USAGE ""
 #define OPT_HELP "(S)NES controller user-space driver for Raspberry Pi GPIO"
 #define OPT_DEBUG -1
+#define OPT_VERBOSE 'v'
 #define OPT_DAEMON 'd'
 #define OPT_PIDFILE 'p'
 
 typedef struct {
+    bool Verbose;
     bool RunAsDaemon;
     bool DebugEnabled;
     char *PidFile;
 } Arguments;
 
 static const struct argp_option options[] = {
+        { "verbose", OPT_VERBOSE, 0, 0, "Print more stuff", 0 },
         { "daemon", OPT_DAEMON, 0, 0, "Run as a daemon", 0 },
         { "debug", OPT_DEBUG, 0, 0, "Run with debug options set in gpio library", 0 },
         { "pidfile", OPT_PIDFILE, "FILE", 0, "Write PID to FILE", 0 },
@@ -98,6 +101,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
     memset(config, 0, sizeof(SNESDevConfig));
     config->RunAsDaemon = !arguments.DebugEnabled && arguments.RunAsDaemon;
     config->DebugEnabled = arguments.DebugEnabled;
+    config->Verbose = arguments.Verbose && !arguments.RunAsDaemon;
 
     // PidFile came from argv so will be way down teh stack :-)
     config->PidFile = arguments.PidFile;
@@ -253,6 +257,7 @@ static int VerifyInputKey(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *r
 
 static Arguments ParseArguments(const int argc, char **argv) {
     Arguments arguments;
+    arguments.Verbose = false;
     arguments.RunAsDaemon = false;
     arguments.DebugEnabled = false;
     arguments.PidFile = NULL;
@@ -268,6 +273,9 @@ static error_t ParseOption(int key, char *arg, struct argp_state *state) {
 
     switch (key)
     {
+        case OPT_VERBOSE:
+            arguments->Verbose = true;
+            break;
         case OPT_DAEMON:
             arguments->RunAsDaemon = true;
             break;

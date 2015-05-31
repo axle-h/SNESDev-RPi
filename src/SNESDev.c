@@ -45,7 +45,7 @@ bool running;
 void InitLog(SNESDevConfig *config);
 void ConfigureGamepads(GamepadsConfig *config, Gamepad *gamepads, InputDevice *gamepadDevices);
 void ConfigureButtons(ButtonsConfig *config, Button *buttons, InputDevice *keyboardDevice);
-void ProcessGamepadFrame(GamepadsConfig *config, Gamepad *gamepads, InputDevice *gamepadDevices);
+void ProcessGamepadFrame(GamepadsConfig *config, Gamepad *gamepads, InputDevice *gamepadDevices, bool verbose);
 void ProcessButtonFrame(Button *buttons, InputDevice *keyboardDevice, unsigned int numberOfEnabledButtons);
 void SetupSignals();
 void SignalHandler(int signal);
@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
 
     InitLog(&config);
 
+    config.DebugEnabled = true;
     bcm2835_set_debug((uint8_t) config.DebugEnabled);
 
 	if (!bcm2835_init()) {
@@ -86,7 +87,7 @@ int main(int argc, char *argv[]) {
 
     unsigned int frameDelayCount = 0;
 	while (running) {
-        ProcessGamepadFrame(&config.Gamepads, gamepads, gamepadDevices);
+        ProcessGamepadFrame(&config.Gamepads, gamepads, gamepadDevices, config.Verbose);
 
         if(runButtonFrame) {
             if (config.Buttons.Total > 0 && frameDelayCount == 0) {
@@ -172,7 +173,7 @@ void ConfigureButtons(ButtonsConfig *const config, Button *const buttons, InputD
     OpenInputDevice(INPUT_KEYBOARD, keyboardDevice);
 }
 
-void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, InputDevice *const gamepadDevices) {
+void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, InputDevice *const gamepadDevices, bool verbose) {
     // Read states of the buttons.
     ReadGamepads(&gamepads[0], config);
 
@@ -181,6 +182,12 @@ void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, 
 
         if(!CheckGamepadState(gamepad)) {
             continue;
+        }
+
+        if(verbose) {
+            printf("[%u] A: %u, B: %u, X: %u, Y: %u, L: %u, R: %u, Select: %u, Start: %u, XAxis: %u, YAxis: %u\n", i + 1,
+                   gamepad->A, gamepad->B, gamepad->X, gamepad->Y, gamepad->L, gamepad->R, gamepad->Select, gamepad->Start,
+                   gamepad->XAxis, gamepad->YAxis);
         }
 
         InputDevice *gamepadDevice = &gamepadDevices[i];
