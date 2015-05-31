@@ -184,7 +184,7 @@ void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, 
         }
 
         if(verbose) {
-            printf("[%u] A: %u, B: %u, X: %u, Y: %u, L: %u, R: %u, Select: %u, Start: %u, XAxis: %u, YAxis: %u\n", i + 1,
+            printf("[%u] A: %d, B: %d, X: %d, Y: %d, L: %d, R: %d, Select: %d, Start: %d, XAxis: %u, YAxis: %u\n", i + 1,
                    gamepad->A, gamepad->B, gamepad->X, gamepad->Y, gamepad->L, gamepad->R, gamepad->Select, gamepad->Start,
                    gamepad->XAxis, gamepad->YAxis);
         }
