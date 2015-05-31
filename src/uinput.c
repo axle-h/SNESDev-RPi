@@ -93,8 +93,9 @@ bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device
 	}
 
     if(deviceType == INPUT_GAMEPAD){
-        WriteAxis(device, ABS_X, 2);
-        WriteAxis(device, ABS_Y, 2);
+        WriteAxis(device, ABS_X, DIGITAL_AXIS_ORIGIN);
+        WriteAxis(device, ABS_Y, DIGITAL_AXIS_ORIGIN);
+        WriteSync(device);
     }
 
 	return true;
