@@ -153,7 +153,7 @@ void ConfigureGamepads(GamepadsConfig *const config, Gamepad *const gamepads, In
 }
 
 void ConfigureButtons(ButtonsConfig *const config, Button *const buttons, InputDevice *const keyboardDevice) {
-    if(config->Total) {
+    if(config->Total == 0) {
         return;
     }
 
