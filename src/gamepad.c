@@ -119,7 +119,7 @@ bool CheckGamepadState(Gamepad *const gamepad) {
     gamepad->R = (gamepad->State & GAMEPAD_BUTTON_R) != 0;
 
     // Check that we don't have noise.
-    if(up && down || left && right) {
+    if((up && down) || (left && right)) {
         gamepad->State = 0;
         return false;
     }
