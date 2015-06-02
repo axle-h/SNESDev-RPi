@@ -57,7 +57,7 @@ bool OpenGamepadControlPins(GamepadsConfig *const config) {
 bool OpenGamepad(Gamepad *const gamepad) {
     gamepad->XAxis = DIGITAL_AXIS_ORIGIN;
     gamepad->YAxis = DIGITAL_AXIS_ORIGIN;
-    return GpioOpen(gamepad->DataGpio, GPIO_INPUT_HIGH);
+    return GpioOpen(gamepad->DataGpio, GPIO_INPUT);
 }
 
 void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
