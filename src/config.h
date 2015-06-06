@@ -7,7 +7,7 @@
 #include "button.h"
 
 typedef struct {
-    bool Verbose;
+    unsigned int Verbose;
     bool RunAsDaemon;
     bool DebugEnabled;
     char *PidFile;

@@ -45,8 +45,8 @@ bool running;
 void InitLog(SNESDevConfig *config);
 void ConfigureGamepads(GamepadsConfig *config, Gamepad *gamepads, InputDevice *gamepadDevices);
 void ConfigureButtons(ButtonsConfig *config, Button *buttons, InputDevice *keyboardDevice);
-void ProcessGamepadFrame(GamepadsConfig *config, Gamepad *gamepads, InputDevice *gamepadDevices, bool verbose);
-void ProcessButtonFrame(Button *buttons, InputDevice *keyboardDevice, unsigned int numberOfEnabledButtons, bool verbose);
+void ProcessGamepadFrame(GamepadsConfig *config, Gamepad *gamepads, InputDevice *gamepadDevices, unsigned int verbose);
+void ProcessButtonFrame(Button *buttons, InputDevice *keyboardDevice, unsigned int numberOfEnabledButtons, unsigned int verbose);
 void SetupSignals();
 void SignalHandler(int signal);
 
@@ -172,19 +172,28 @@ void ConfigureButtons(ButtonsConfig *const config, Button *const buttons, InputD
     OpenInputDevice(INPUT_KEYBOARD, keyboardDevice);
 }
 
-void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, InputDevice *const gamepadDevices, bool verbose) {
+void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, InputDevice *const gamepadDevices, unsigned int verbose) {
     // Read states of the buttons.
     ReadGamepads(&gamepads[0], config);
 
     for(unsigned int i = 0; i < config->Total; i++) {
         Gamepad *gamepad = gamepads + i;
 
-        if(!CheckGamepadState(gamepad)) {
+        bool stateUpdated = CheckGamepadState(gamepad);
+
+        if(verbose > 1 && (stateUpdated || gamepad->State > 0)) {
+            printf("[%u] State 0x%4x, ", i + 1, gamepad->State);
+        }
+
+        if(!stateUpdated) {
             continue;
         }
 
-        if(verbose) {
-            printf("[%u] A: %d, B: %d, X: %d, Y: %d, L: %d, R: %d, Select: %d, Start: %d, XAxis: %u, YAxis: %u\n", i + 1,
+        if(verbose > 0) {
+            if(verbose == 1) {
+                printf("[%u] ", i + 1);
+            }
+            printf("A: %d, B: %d, X: %d, Y: %d, L: %d, R: %d, Select: %d, Start: %d, XAxis: %u, YAxis: %u\n",
                    gamepad->A, gamepad->B, gamepad->X, gamepad->Y, gamepad->L, gamepad->R, gamepad->Select, gamepad->Start,
                    gamepad->XAxis, gamepad->YAxis);
         }
@@ -204,7 +213,7 @@ void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, 
     }
 }
 
-void ProcessButtonFrame(Button *const buttons, InputDevice *const keyboardDevice, unsigned int numberOfEnabledButtons, bool verbose) {
+void ProcessButtonFrame(Button *const buttons, InputDevice *const keyboardDevice, unsigned int numberOfEnabledButtons, unsigned int verbose) {
     for(unsigned int i = 0; i < numberOfEnabledButtons; i++) {
         Button *button = buttons + i;
 

@@ -15,7 +15,7 @@
 #define OPT_PIDFILE 'p'
 
 typedef struct {
-    bool Verbose;
+    unsigned int Verbose;
     bool RunAsDaemon;
     bool DebugEnabled;
     char *PidFile;
@@ -101,7 +101,7 @@ bool TryGetSNESDevConfig(const char *fileName, const int argc, char **argv, SNES
     memset(config, 0, sizeof(SNESDevConfig));
     config->RunAsDaemon = !arguments.DebugEnabled && arguments.RunAsDaemon;
     config->DebugEnabled = arguments.DebugEnabled;
-    config->Verbose = arguments.Verbose && !arguments.RunAsDaemon;
+    config->Verbose = config->RunAsDaemon ? 0 : arguments.Verbose;
 
     // PidFile came from argv so will be way down teh stack :-)
     config->PidFile = arguments.PidFile;
@@ -257,7 +257,7 @@ static int VerifyInputKey(cfg_t *cfg, cfg_opt_t *opt, const char *value, void *r
 
 static Arguments ParseArguments(const int argc, char **argv) {
     Arguments arguments;
-    arguments.Verbose = false;
+    arguments.Verbose = 0;
     arguments.RunAsDaemon = false;
     arguments.DebugEnabled = false;
     arguments.PidFile = NULL;
@@ -274,7 +274,7 @@ static error_t ParseOption(int key, char *arg, struct argp_state *state) {
     switch (key)
     {
         case OPT_VERBOSE:
-            arguments->Verbose = true;
+            arguments->Verbose++;
             break;
         case OPT_DAEMON:
             arguments->RunAsDaemon = true;
