@@ -182,13 +182,10 @@ void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, 
         bool stateUpdated = CheckGamepadState(gamepad);
 
         if(verbose > 1 && (stateUpdated || gamepad->State > 0)) {
-            printf("[%u] State 0x%4x, ", i + 1, gamepad->State);
+            printf("[%u] State 0x%4x%s", i + 1, gamepad->State, stateUpdated ? ", " : "\n");
         }
 
         if(!stateUpdated) {
-            if(verbose > 1) {
-                printf("\n");
-            }
             continue;
         }
 
