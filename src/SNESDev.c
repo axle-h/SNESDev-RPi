@@ -186,6 +186,9 @@ void ProcessGamepadFrame(GamepadsConfig *const config, Gamepad *const gamepads, 
         }
 
         if(!stateUpdated) {
+            if(verbose > 1) {
+                printf("\n");
+            }
             continue;
         }
 
