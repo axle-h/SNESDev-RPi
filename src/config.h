@@ -10,8 +10,8 @@ typedef struct {
     unsigned int Verbose;
     bool RunAsDaemon;
     bool DebugEnabled;
-    char *PidFile;
-
+    const char *PidFile;
+    int PidFilePointer;
     GamepadsConfig Gamepads;
     ButtonsConfig Buttons;
 } SNESDevConfig;

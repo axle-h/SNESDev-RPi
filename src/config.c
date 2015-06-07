@@ -18,7 +18,7 @@ typedef struct {
     unsigned int Verbose;
     bool RunAsDaemon;
     bool DebugEnabled;
-    char *PidFile;
+    const char *PidFile;
 } Arguments;
 
 static const struct argp_option options[] = {

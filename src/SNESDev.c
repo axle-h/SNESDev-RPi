@@ -65,9 +65,7 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-    if(config.RunAsDaemon) {
-        StartDaemon(config.PidFile);
-    }
+    TryStartDaemon(&config);
 
     Gamepad gamepads[config.Gamepads.Total];
     InputDevice gamepadDevices[config.Gamepads.Total];
@@ -107,6 +105,8 @@ int main(int argc, char *argv[]) {
 
     closelog();
     bcm2835_close();
+
+    TryStopDaemon(&config);
 	return 0;
 }
 
