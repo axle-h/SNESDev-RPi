@@ -72,20 +72,20 @@ void ReadGamepads(Gamepad *const gamepads, GamepadsConfig *const config) {
     // Latch the shift register.
     GpioPulseHigh(config->LatchGpio, 12, 6);
 
-	for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
-		for(unsigned int i = 0; i < config->Total; i++) {
-			gamepad = gamepads + i;
+    for (unsigned int clock = 0; clock < config->ClockPulses; clock++) {
+        for(unsigned int i = 0; i < config->Total; i++) {
+            gamepad = gamepads + i;
 
             // SNES sets gpio low when button pressed.
             // Must have a pull-up resistor or we'll get all buttons pressed when controller disconnected.
-			if (GpioRead(gamepad->DataGpio) == GPIO_LOW) {
+            if (GpioRead(gamepad->DataGpio) == GPIO_LOW) {
                 gamepad->State |= (1 << clock);
-			}
-		}
+            }
+        }
 
         // Pulse the clock to shift the register
-		GpioPulseLow(config->ClockGpio, 6, 6);
-	}
+        GpioPulseLow(config->ClockGpio, 6, 6);
+    }
 }
 
 bool CheckGamepadState(Gamepad *const gamepad) {

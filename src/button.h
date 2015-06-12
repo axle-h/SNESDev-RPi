@@ -51,7 +51,7 @@ typedef enum {
 } ButtonState;
 
 typedef struct {
-	uint8_t Gpio;
+    uint8_t Gpio;
     InputKey Key;
     ButtonState State;
 } Button;

@@ -101,7 +101,7 @@ typedef enum {
 } InputDeviceType;
 
 typedef struct {
-	int File;
+    int File;
     char Name[20];
 } InputDevice;
 

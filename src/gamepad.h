@@ -71,8 +71,8 @@ typedef struct {
 } GamepadsConfig;
 
 typedef struct {
-	uint8_t DataGpio;
-	uint16_t State;
+    uint8_t DataGpio;
+    uint16_t State;
     uint16_t LastState;
     bool B;
     bool Y;

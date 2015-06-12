@@ -16,13 +16,13 @@ find_package(BCM2835 REQUIRED)
 find_package(Confuse REQUIRED)
 
 include_directories(include
-	${CONFUSE_INCLUDE_DIR}
-	${BCM2835_INCLUDE_DIR})
+    ${CONFUSE_INCLUDE_DIR}
+    ${BCM2835_INCLUDE_DIR})
 
 add_executable(SNESDev ${SOURCE_FILES})
 target_link_libraries(SNESDev
-	${CONFUSE_STATIC_LIBRARIES}
-	${BCM2835_STATIC_LIBRARIES})
+    ${CONFUSE_STATIC_LIBRARIES}
+    ${BCM2835_STATIC_LIBRARIES})
 
 # install target
 install(TARGETS SNESDev

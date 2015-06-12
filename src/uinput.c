@@ -41,23 +41,23 @@ DEFINE_ENUM(InputKey, ENUM_INPUT_KEYS, unsigned int)
 
 bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device)
 {
-	device->File = open(UINPUT_DEVICE, O_WRONLY | O_NDELAY);
-	if (device->File < 0) {
-		fprintf(stderr, "Unable to open %s\n", UINPUT_DEVICE);
-		return false;
-	}
+    device->File = open(UINPUT_DEVICE, O_WRONLY | O_NDELAY);
+    if (device->File < 0) {
+        fprintf(stderr, "Unable to open %s\n", UINPUT_DEVICE);
+        return false;
+    }
 
-	struct uinput_user_dev userInput;
-	memset(&userInput, 0, sizeof(userInput));
-	strncpy(userInput.name, device->Name, strlen(device->Name));
+    struct uinput_user_dev userInput;
+    memset(&userInput, 0, sizeof(userInput));
+    strncpy(userInput.name, device->Name, strlen(device->Name));
     userInput.id.version = 4;
     userInput.id.bustype = BUS_USB;
     userInput.id.product = 1;
     userInput.id.vendor = 1;
 
-	// Setup the uinput device as a keyboard with basic keys
-	ioctl(device->File, UI_SET_EVBIT, EV_KEY);
-	ioctl(device->File, UI_SET_EVBIT, EV_REL);
+    // Setup the uinput device as a keyboard with basic keys
+    ioctl(device->File, UI_SET_EVBIT, EV_KEY);
+    ioctl(device->File, UI_SET_EVBIT, EV_REL);
 
     switch (deviceType) {
         case INPUT_GAMEPAD:
@@ -86,11 +86,11 @@ bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device
             break;
     }
 
-	// Add input device into input sub-system
-	write(device->File, &userInput, sizeof(userInput));
-	if (ioctl(device->File, UI_DEV_CREATE) < 0) {
-		return false;
-	}
+    // Add input device into input sub-system
+    write(device->File, &userInput, sizeof(userInput));
+    if (ioctl(device->File, UI_DEV_CREATE) < 0) {
+        return false;
+    }
 
     if(deviceType == INPUT_GAMEPAD){
         WriteAxis(device, ABS_X, DIGITAL_AXIS_ORIGIN);
@@ -98,13 +98,13 @@ bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device
         WriteSync(device);
     }
 
-	return true;
+    return true;
 }
 
 bool CloseInputDevice(InputDevice *const device)
 {
-	ioctl(device->File, UI_DEV_DESTROY);
-	return close(device->File) == 0;
+    ioctl(device->File, UI_DEV_DESTROY);
+    return close(device->File) == 0;
 }
 
 bool WriteAxis(InputDevice *const device, unsigned short int axis, DigitalAxisValue value) {
@@ -124,17 +124,17 @@ bool WriteAxis(InputDevice *const device, unsigned short int axis, DigitalAxisVa
 }
 
 bool WriteKey(InputDevice *const device, unsigned short int key, bool keyPressed) {
-	struct input_event event;
+    struct input_event event;
     memset(&event, 0, sizeof(event));
 
-	event.type = EV_KEY;
-	event.code = key;
-	event.value = keyPressed;
+    event.type = EV_KEY;
+    event.code = key;
+    event.value = keyPressed;
 
-	if (write(device->File, &event, sizeof(event)) <= 0) {
+    if (write(device->File, &event, sizeof(event)) <= 0) {
         fprintf(stderr, "Unable to write key to '%s'\n", device->Name);
         return false;
-	}
+    }
 
     return true;
 }

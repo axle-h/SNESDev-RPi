@@ -30,15 +30,15 @@
 #include <stdbool.h>
 
 typedef enum {
-	GPIO_OUTPUT = 0,
-	GPIO_INPUT  = 1,
-	GPIO_INPUT_LOW  = 2,
-	GPIO_INPUT_HIGH  = 3
+    GPIO_OUTPUT = 0,
+    GPIO_INPUT  = 1,
+    GPIO_INPUT_LOW  = 2,
+    GPIO_INPUT_HIGH  = 3
 } GpioDirection;
 
 typedef enum {
-	GPIO_LOW  = 0x0,
-	GPIO_HIGH = 0x1
+    GPIO_LOW  = 0x0,
+    GPIO_HIGH = 0x1
 } GpioLevel;
 
 bool GpioOpen(uint8_t pin, GpioDirection direction);

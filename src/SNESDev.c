@@ -61,9 +61,9 @@ int main(int argc, char *argv[]) {
 
     bcm2835_set_debug((uint8_t) config.DebugEnabled);
 
-	if (!bcm2835_init()) {
-		return EXIT_FAILURE;
-	}
+    if (!bcm2835_init()) {
+        return EXIT_FAILURE;
+    }
 
     TryStartDaemon(&config);
 
@@ -83,11 +83,11 @@ int main(int argc, char *argv[]) {
                     : 0;
 
     unsigned int frameDelayCount = 0;
-	while (running) {
+    while (running) {
         ProcessGamepadFrame(&config.Gamepads, gamepads, gamepadDevices, config.Verbose);
 
         if(runButtonFrame) {
-            if (config.Buttons.Total > 0 && frameDelayCount == 0) {
+            if (frameDelayCount == 0) {
                 ProcessButtonFrame(buttons, &keyboardDevice, config.Buttons.Total, config.Verbose);
             }
 
@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
         }
 
         bcm2835_delay(config.Gamepads.PollFrequency);
-	}
+    }
 
     CloseInputDevice(&keyboardDevice);
     for (unsigned int i = 0; i < config.Gamepads.Total; i++) {
@@ -107,7 +107,7 @@ int main(int argc, char *argv[]) {
     bcm2835_close();
 
     TryStopDaemon(&config);
-	return 0;
+    return 0;
 }
 
 void InitLog(SNESDevConfig *const config) {

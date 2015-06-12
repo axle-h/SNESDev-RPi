@@ -32,29 +32,29 @@
 
 bool GpioOpen(uint8_t pin, GpioDirection direction)
 {
-	switch (direction){
-		case GPIO_OUTPUT:
-			bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_OUTP);
+    switch (direction){
+        case GPIO_OUTPUT:
+            bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_OUTP);
             bcm2835_gpio_write(pin, LOW);
-			return true;
-		case GPIO_INPUT:
-			bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
-			return true;
-		case GPIO_INPUT_LOW:
+            return true;
+        case GPIO_INPUT:
+            bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
+            return true;
+        case GPIO_INPUT_LOW:
             bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
             bcm2835_gpio_set_pud(pin, BCM2835_GPIO_PUD_DOWN);
             return true;
-		case GPIO_INPUT_HIGH:
+        case GPIO_INPUT_HIGH:
             bcm2835_gpio_fsel(pin, BCM2835_GPIO_FSEL_INPT);
             bcm2835_gpio_set_pud(pin, BCM2835_GPIO_PUD_UP);
             return true;
-	}
+    }
 
-	return false;
+    return false;
 }
 
 GpioLevel GpioRead(uint8_t pin) {
-	return (GpioLevel)bcm2835_gpio_lev(pin);
+    return (GpioLevel)bcm2835_gpio_lev(pin);
 }
 
 void GpioWrite(uint8_t pin, GpioLevel val) {
@@ -63,9 +63,9 @@ void GpioWrite(uint8_t pin, GpioLevel val) {
 
 void GpioPulseHigh(uint8_t pin, uint64_t microsHigh, uint64_t microsLow) {
     bcm2835_gpio_write(pin, HIGH);
-	bcm2835_delayMicroseconds(microsHigh);
+    bcm2835_delayMicroseconds(microsHigh);
     bcm2835_gpio_write(pin, LOW);
-	bcm2835_delayMicroseconds(microsLow);
+    bcm2835_delayMicroseconds(microsLow);
 }
 
 void GpioPulseLow(uint8_t pin, uint64_t microsLow, uint64_t microsHigh) {
