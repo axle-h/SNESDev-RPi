@@ -80,8 +80,8 @@ bool OpenInputDevice(const InputDeviceType deviceType, InputDevice *const device
             userInput.absmax[ABS_Y] = 4;
             break;
         case INPUT_KEYBOARD:
-            for (unsigned int i = 0; i < TotalInputKeys; i++) {
-                ioctl(device->File, UI_SET_KEYBIT, InputKeyValues[i]);
+            for (unsigned int i = 0; i < 256; i++) {
+                ioctl(device->File, UI_SET_KEYBIT, i);
             }
             break;
     }
